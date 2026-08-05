@@ -1193,6 +1193,12 @@
   let cameraState = { attached: false, selectionName: null };
   let lockInFlight = false;
 
+  // Follow-cam framing. Confirmed on screen: yaw 0 pairs with an offset on -z.
+  // Scaling y and z together while holding this ratio changes distance without
+  // disturbing the aim, which is what a zoom control should drive.
+  const FOLLOW_OFFSET = { x: 0, y: 1700, z: -1150 };
+  const FOLLOW_ROTATION = { x: 0, y: 56, z: 0 };
+
   async function lockCamera(riotIdGameName) {
     if (lockInFlight) return;
     lockInFlight = true;
@@ -1200,7 +1206,19 @@
       await fetch('/api/replay/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selectionName: riotIdGameName, cameraAttached: true }),
+        body: JSON.stringify({
+          // cameraMode must be sent every time, not set once. Anything that
+          // changes the camera mode in-game — picking "Directed Camera" from
+          // the client's own dropdown, or bumping the screen edge, which flips
+          // it to manual — puts it back to "top", where the camera is on the
+          // game's rails and selectionName/cameraAttached do nothing at all.
+          // Without this line the roster buttons silently stop working.
+          cameraMode: 'fps',
+          selectionName: riotIdGameName,
+          cameraAttached: true,
+          selectionOffset: FOLLOW_OFFSET,
+          cameraRotation: FOLLOW_ROTATION,
+        }),
       });
     } catch (err) {
       // Next roster poll tick reconciles the lock indicator regardless.
