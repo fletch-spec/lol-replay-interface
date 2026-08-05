@@ -4,3 +4,7 @@ node_modules/
 # regenerate themselves. Keeping them out means the repo doesn't carry a copy
 # of Riot's art that goes stale every patch.
 app/cache/
+
+# Local Claude Code state; launch.json is kept (see below).
+.claude/*
+!.claude/launch.json

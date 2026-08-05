@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "helper",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--prefix", "app"],
+      "port": 3000
+    }
+  ]
+}

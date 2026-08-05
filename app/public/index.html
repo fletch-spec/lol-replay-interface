@@ -24,6 +24,11 @@
     --kill: #e05c5c;
     --obj: #e0b23c;
     --struct: #7f8ea3;
+    /* Cue points and the A/B loop (brief 005). Deliberately outside the event
+       palette and outside blue/red, so a cue can never be misread as an event
+       marker or a team. */
+    --cue: #2fd4c6;
+    --loop: #a97bff;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -493,6 +498,210 @@
   }
   .scrub-ghost.snapped .ghost-time { border-color: var(--accent); }
 
+  /* --- Cue points + A/B loop (brief 005) --- */
+
+  /* Cues live in the strip *below* the track; brief 004's event markers live in
+     the gutter above it. Different side, different shape, different colour —
+     two marker types on one bar must not be confusable. */
+  .cue-pins {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: 15px;
+  }
+  .cue-pin {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 15px;
+    background: var(--cue);
+    transform: translateX(-50%);
+    cursor: pointer;
+  }
+  /* Pin head, and a 16px hit target around the whole thing. */
+  .cue-pin::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--cue);
+  }
+  .cue-pin::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 19px;
+  }
+  .cue-pin.noted::after {
+    border-radius: 2px;
+  }
+  .cue-pin:hover,
+  .cue-pin.hot {
+    background: #fff;
+  }
+  .cue-pin:hover::after,
+  .cue-pin.hot::after {
+    background: #fff;
+  }
+  .cue-pin.active::after {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+
+  .loop-region {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(169, 123, 255, 0.16);
+    border-left: 1px solid var(--loop);
+    border-right: 1px solid var(--loop);
+    pointer-events: none;
+    display: none;
+    z-index: 2;
+  }
+  .loop-region.visible { display: block; }
+  .loop-region.armed { background: rgba(169, 123, 255, 0.3); }
+  .loop-edge {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--loop);
+    pointer-events: none;
+    display: none;
+    z-index: 2;
+  }
+  .loop-edge.visible { display: block; }
+  .loop-edge::after {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--loop);
+  }
+  .loop-edge.a::after { content: 'A'; }
+  .loop-edge.b::after { content: 'B'; }
+
+  .chip.loop {
+    color: #d8c2ff;
+    border-color: rgba(169, 123, 255, 0.45);
+    display: none;
+  }
+  .chip.loop.visible { display: inline; }
+  .chip.loop.armed {
+    background: rgba(169, 123, 255, 0.18);
+  }
+
+  .cue-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 6px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+  .cue-row:hover { background: rgba(255, 255, 255, 0.05); }
+  .cue-row.active { background: rgba(47, 212, 198, 0.14); }
+  .cue-num {
+    flex-shrink: 0;
+    width: 16px;
+    text-align: right;
+    font-size: 10px;
+    color: var(--dim);
+  }
+  .cue-time {
+    flex-shrink: 0;
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 11px;
+    color: var(--cue);
+    cursor: pointer;
+  }
+  .cue-note {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    padding: 3px 5px;
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+  }
+  .cue-note:hover { border-color: var(--border); }
+  .cue-note:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #0b0d10;
+  }
+  .cue-del {
+    flex-shrink: 0;
+    padding: 0;
+    width: 18px;
+    height: 18px;
+    font-size: 13px;
+    line-height: 1;
+    border-radius: 5px;
+    color: var(--dim);
+    background: transparent;
+    border: 1px solid transparent;
+  }
+  .cue-del:hover {
+    color: var(--bad);
+    border-color: var(--border);
+  }
+  .cue-empty {
+    padding: 8px 6px;
+    font-size: 11px;
+    color: var(--dim);
+  }
+  .cue-export {
+    display: none;
+    width: 100%;
+    height: 90px;
+    margin-top: 6px;
+    resize: vertical;
+    background: #0b0d10;
+    border: 1px solid var(--accent);
+    border-radius: 7px;
+    padding: 6px 8px;
+    color: var(--text);
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .cue-export.visible { display: block; }
+
+  .cue-actions {
+    display: flex;
+    gap: 6px;
+    padding: 6px 4px 2px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .cue-actions button {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 8px;
+    border-radius: 7px;
+  }
+
+  .timeline-side {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 170px;
+    flex-shrink: 0;
+  }
+
   .legend {
     display: flex;
     gap: 14px;
@@ -514,10 +723,13 @@
   .legend-dot.objective { background: var(--obj); }
   .legend-dot.tower { background: var(--struct); }
   .legend-dot.ace { background: #fff; }
+  .legend-dot.cue {
+    background: var(--cue);
+    border-radius: 50%;
+  }
   .events-panel {
     position: relative;
-    width: 170px;
-    flex-shrink: 0;
+    width: 100%;
   }
   .events-toggle {
     font-size: 13px;
@@ -525,6 +737,9 @@
     width: 100%;
     text-align: left;
   }
+  /* Cue rows carry an editable note field, so they need more room than an
+     event row does. */
+  #cuesList { width: max(360px, 100%); }
   .events-list {
     display: none;
     position: absolute;
@@ -597,7 +812,8 @@
   }
   .handle-time {
     position: absolute;
-    top: calc(100% + 3px);
+    /* Clears the 15px cue-pin strip that sits directly under the track. */
+    top: calc(100% + 18px);
     left: 50%;
     transform: translateX(-50%);
     font-family: "Consolas", "Cascadia Mono", monospace;
@@ -629,8 +845,8 @@
     font-family: "Consolas", "Cascadia Mono", monospace;
     font-size: 14px;
     color: var(--dim);
-    /* Clears the handle's time bubble, which hangs below the track. */
-    margin-top: 24px;
+    /* Clears the cue-pin strip and the handle's time bubble below the track. */
+    margin-top: 39px;
   }
   .time-next {
     flex: 1;
@@ -703,6 +919,7 @@
         <span class="chip mode" id="gameMode">—</span>
         <span class="chip" id="speedChip">1×</span>
         <span class="chip" id="paused">—</span>
+        <span class="chip loop" id="loopChip"></span>
       </div>
     </div>
 
@@ -712,7 +929,11 @@
           <div class="scrub-track" id="scrubTrack">
             <div class="scrub-fill" id="scrubFill"></div>
             <div class="scrub-ticks" id="scrubTicks"></div>
+            <div class="loop-region" id="loopRegion"></div>
+            <div class="loop-edge a" id="loopEdgeA"></div>
+            <div class="loop-edge b" id="loopEdgeB"></div>
             <div class="scrub-markers" id="scrubMarkers"></div>
+            <div class="cue-pins" id="cuePins"></div>
             <div class="scrub-ghost" id="scrubGhost">
               <div class="ghost-time" id="ghostTime">0:00</div>
             </div>
@@ -732,12 +953,19 @@
             <span class="legend-item"><span class="legend-dot tower"></span>Structure</span>
             <span class="legend-item"><span class="legend-dot ace"></span>Ace</span>
             <span class="legend-item">Top cap = team</span>
+            <span class="legend-item"><span class="legend-dot cue"></span>Cue (below bar)</span>
           </div>
         </div>
 
-        <div class="events-panel" id="eventsPanel">
-          <button class="events-toggle" id="eventsToggle">Events (0)</button>
-          <div class="events-list" id="eventsList"></div>
+        <div class="timeline-side">
+          <div class="events-panel" id="eventsPanel">
+            <button class="events-toggle" id="eventsToggle">Events (0)</button>
+            <div class="events-list" id="eventsList"></div>
+          </div>
+          <div class="events-panel" id="cuesPanel">
+            <button class="events-toggle" id="cuesToggle">Cues (0)</button>
+            <div class="events-list" id="cuesList"></div>
+          </div>
         </div>
       </div>
 
@@ -750,7 +978,10 @@
           <button class="speed-btn" data-speed="2">2×</button>
           <button class="speed-btn" data-speed="4">4×</button>
         </div>
-        <div class="hint">Space = pause · ←/→ = ±5s · shift+←/→ = ±1s · , / . = prev/next event · hold alt = no snap</div>
+        <div class="hint">
+          <div>Space = pause · ←/→ = ±5s · shift+←/→ = ±1s · , / . = prev/next event · alt = no snap</div>
+          <div>M = place cue · N / B = next/prev cue · [ ] = loop A/B · L = loop on/off · Esc = clear loop</div>
+        </div>
       </div>
     </div>
 
@@ -801,6 +1032,15 @@
   const eventsToggleEl = document.getElementById('eventsToggle');
   const eventsListEl = document.getElementById('eventsList');
 
+  const cuePinsEl = document.getElementById('cuePins');
+  const cuesPanelEl = document.getElementById('cuesPanel');
+  const cuesToggleEl = document.getElementById('cuesToggle');
+  const cuesListEl = document.getElementById('cuesList');
+  const loopRegionEl = document.getElementById('loopRegion');
+  const loopEdgeAEl = document.getElementById('loopEdgeA');
+  const loopEdgeBEl = document.getElementById('loopEdgeB');
+  const loopChipEl = document.getElementById('loopChip');
+
   let currentState = 'helper-down';
   let gameModeKnown = false;
 
@@ -814,6 +1054,7 @@
   // Seek coalescing — rapid arrow presses / drags collapse to the latest target only.
   let seekRunning = false;
   let pendingSeekTarget = null;
+  let pendingSeekHold = false;
   let currentSeekTarget = null;
 
   // Serializes every write to /replay/playback so pause/seek/speed never interleave.
@@ -873,6 +1114,8 @@
       lastRenderedLength = length;
       renderTicks();
       renderMarkers();
+      renderCuePins();
+      renderLoop();
     }
 
     scrubFill.style.width = `${pct}%`;
@@ -1070,6 +1313,7 @@
       const data = await res.json();
       gameModeEl.textContent = data.gameMode || '—';
       gameModeKnown = true;
+      syncCuesToIdentity(); // identity is only complete once gameMode lands
     } catch (err) {
       // replay may not be loaded yet — retry loop below will try again
     }
@@ -1254,7 +1498,10 @@
     marker.addEventListener('mousedown', (e) => e.stopPropagation());
     marker.addEventListener('click', (e) => {
       e.stopPropagation();
-      requestSeek(first.EventTime);
+      // Most cues land on events anyway — shift+click saves playing through to
+      // the moment just to press M there.
+      if (e.shiftKey) placeCue(first.EventTime);
+      else requestSeek(first.EventTime);
     });
     marker.addEventListener('mouseenter', () => showHoverCard(cluster));
     marker.addEventListener('mouseleave', scheduleHideHoverCard);
@@ -1307,6 +1554,7 @@
   // --- Hover card ---
 
   let hoverCluster = null;
+  let hoverAnchorEl = null;
   let hoverHideTimer = null;
 
   function portraitImg(champion, extraClass) {
@@ -1358,25 +1606,32 @@
     row.addEventListener('click', (e) => {
       e.stopPropagation();
       hideHoverCard();
-      requestSeek(event.EventTime);
+      if (e.shiftKey) placeCue(event.EventTime);
+      else requestSeek(event.EventTime);
     });
     return row;
   }
 
-  function showHoverCard(cluster) {
+  // Shared by event markers and cue pins — both anchor a card to a position on
+  // the track, they just build different rows.
+  function openHoverCard(pxX, rows, anchorEl) {
     clearTimeout(hoverHideTimer);
-    if (hoverCluster && hoverCluster !== cluster) hoverCluster.el.classList.remove('hot');
-    hoverCluster = cluster;
-    cluster.el.classList.add('hot');
+    if (hoverAnchorEl && hoverAnchorEl !== anchorEl) hoverAnchorEl.classList.remove('hot');
+    hoverAnchorEl = anchorEl;
+    if (anchorEl) anchorEl.classList.add('hot');
 
-    hoverCardEl.replaceChildren();
-    for (const event of cluster.events) hoverCardEl.appendChild(buildHoverRow(event));
+    hoverCardEl.replaceChildren(...rows);
     hoverCardEl.classList.add('visible');
 
     const areaWidth = scrubAreaEl.getBoundingClientRect().width;
     const cardWidth = hoverCardEl.getBoundingClientRect().width;
     const half = cardWidth / 2;
-    hoverCardEl.style.left = `${clamp(cluster.pxX, half + 2, Math.max(half + 2, areaWidth - half - 2))}px`;
+    hoverCardEl.style.left = `${clamp(pxX, half + 2, Math.max(half + 2, areaWidth - half - 2))}px`;
+  }
+
+  function showHoverCard(cluster) {
+    hoverCluster = cluster;
+    openHoverCard(cluster.pxX, cluster.events.map(buildHoverRow), cluster.el);
   }
 
   function scheduleHideHoverCard() {
@@ -1388,7 +1643,8 @@
     clearTimeout(hoverHideTimer);
     hoverCardEl.classList.remove('visible');
     hoverCardEl.replaceChildren();
-    if (hoverCluster && hoverCluster.el) hoverCluster.el.classList.remove('hot');
+    if (hoverAnchorEl) hoverAnchorEl.classList.remove('hot');
+    hoverAnchorEl = null;
     hoverCluster = null;
   }
 
@@ -1450,8 +1706,25 @@
     }
   }
 
+  // The Replay API has no stable game identifier: /replay/game returns only a
+  // processID (new every client launch) and no path in the whole spec carries a
+  // match ID or the replay filename — checked against the swagger, not assumed.
+  // So identity is the composite brief 005 names as its fallback. Imperfect, but
+  // it distinguishes replays in practice, and events and cues must agree on it.
+  function replayIdentity() {
+    return `${gameModeEl.textContent}:${Math.round(lastPolled.length)}`;
+  }
+
+  function identityKnown() {
+    return gameModeEl.textContent !== '—' && (lastPolled.length || 0) > 0;
+  }
+
   function eventsCacheKey() {
-    return `lol-events:${gameModeEl.textContent}:${Math.round(lastPolled.length)}`;
+    return `lol-events:${replayIdentity()}`;
+  }
+
+  function cuesStorageKey() {
+    return `cues:${replayIdentity()}`;
   }
 
   // Seeks to the end so the client's cumulative event feed populates fully, then seeks back.
@@ -1498,6 +1771,7 @@
     clearEventsDisplay();
     (async () => {
       await fetchGameMode();
+      syncCuesToIdentity();
       harvestEvents();
     })();
   }
@@ -1516,6 +1790,377 @@
     console.log('[events] replay processID changed mid-session — clearing accumulated events for the new game');
     handleNewGame();
   }
+
+  // --- Cue points + A/B loop (brief 005) ---
+
+  const DEFAULT_LEAD = 2;
+
+  let cues = [];
+  let activeCueIndex = null;
+  let cuesExpanded = false;
+  let cueIdentity = null;
+
+  let loopA = null;
+  let loopB = null;
+  let loopEnabled = false;
+
+  // Built once and re-appended on each list render, so its contents and
+  // selection survive the list repainting underneath it.
+  const exportAreaEl = document.createElement('textarea');
+  exportAreaEl.className = 'cue-export';
+  exportAreaEl.readOnly = true;
+  exportAreaEl.spellcheck = false;
+
+  // A and B are kept exactly as pressed; the usable range is derived, so setting
+  // them in either order works.
+  function loopRange() {
+    if (loopA === null || loopB === null) return null;
+    const start = Math.min(loopA, loopB);
+    const end = Math.max(loopA, loopB);
+    return end - start < 0.5 ? null : { start, end };
+  }
+
+  function loadCues() {
+    try {
+      const raw = localStorage.getItem(cuesStorageKey());
+      const parsed = raw ? JSON.parse(raw) : [];
+      cues = (Array.isArray(parsed) ? parsed : [])
+        .filter((c) => c && typeof c.t === 'number' && isFinite(c.t))
+        .map((c) => ({
+          t: c.t,
+          note: typeof c.note === 'string' ? c.note : '',
+          lead: typeof c.lead === 'number' ? c.lead : DEFAULT_LEAD,
+        }))
+        .sort((a, b) => a.t - b.t);
+    } catch (err) {
+      cues = []; // Corrupt entry — start clean rather than blocking the panel.
+    }
+    activeCueIndex = null;
+    renderCues();
+  }
+
+  function saveCues() {
+    if (!identityKnown()) return;
+    try {
+      localStorage.setItem(cuesStorageKey(), JSON.stringify(cues));
+    } catch (err) {
+      // Storage full or unavailable — cues still work for this session.
+    }
+  }
+
+  // Identity only becomes known once both gameMode and length have arrived, and
+  // it changes when a different replay loads. Every path that could change it
+  // ends up here.
+  function syncCuesToIdentity() {
+    if (!identityKnown()) return;
+    const identity = replayIdentity();
+    if (identity === cueIdentity) return;
+    cueIdentity = identity;
+    clearLoop();
+    loadCues();
+  }
+
+  function clearCuesDisplay() {
+    cues = [];
+    activeCueIndex = null;
+    cueIdentity = null;
+    clearLoop();
+    renderCues();
+  }
+
+  function placeCue(atTime) {
+    if (!identityKnown()) return;
+    const t = clamp(typeof atTime === 'number' ? atTime : getDisplayTime(), 0, lastPolled.length || 0);
+    // Double-tap guard — M is meant to be hit fast and without looking.
+    if (cues.some((c) => Math.abs(c.t - t) < 0.5)) return;
+    cues.push({ t, note: '', lead: DEFAULT_LEAD });
+    cues.sort((a, b) => a.t - b.t);
+    saveCues();
+    renderCues();
+  }
+
+  function deleteCue(index) {
+    cues.splice(index, 1);
+    if (activeCueIndex !== null && activeCueIndex >= cues.length) activeCueIndex = null;
+    saveCues();
+    renderCues();
+  }
+
+  // Lands at `cue.t - lead` and holds paused: you want the couple of seconds
+  // before the fight to set it up verbally, not to arrive mid-explosion.
+  function seekToCue(index) {
+    const cue = cues[index];
+    if (!cue) return;
+    activeCueIndex = index;
+    const lead = typeof cue.lead === 'number' ? cue.lead : DEFAULT_LEAD;
+    requestSeek(Math.max(0, cue.t - lead), { holdPaused: true, keepCueCursor: true });
+    renderCues();
+  }
+
+  // Steps a cursor rather than searching by time. After landing at
+  // `cue.t - lead` the playhead sits *before* the cue it just moved to, so a
+  // time-based "next cue after now" would find the same cue again and never
+  // advance. The cursor is cleared by any seek the user makes another way,
+  // which is what re-syncs it to wherever they scrubbed to.
+  function gotoCue(direction) {
+    if (!cues.length) return;
+    let index;
+    if (activeCueIndex !== null && cues[activeCueIndex]) {
+      index = activeCueIndex + direction;
+    } else if (direction > 0) {
+      index = cues.findIndex((c) => c.t > getDisplayTime() + 0.5);
+    } else {
+      const now = getDisplayTime();
+      index = -1;
+      for (let i = cues.length - 1; i >= 0; i--) {
+        if (cues[i].t < now - 0.5) {
+          index = i;
+          break;
+        }
+      }
+    }
+    if (index < 0 || index >= cues.length) return;
+    seekToCue(index);
+  }
+
+  function setLoopPoint(which) {
+    if (which === 'a') loopA = getDisplayTime();
+    else loopB = getDisplayTime();
+    renderLoop();
+  }
+
+  function toggleLoop() {
+    if (!loopRange()) return;
+    loopEnabled = !loopEnabled;
+    renderLoop();
+  }
+
+  function clearLoop() {
+    loopA = null;
+    loopB = null;
+    loopEnabled = false;
+    renderLoop();
+  }
+
+  // Driven by the same ~10Hz playback push the transport uses — no second
+  // timer, and no second seek path. Deliberately inert while paused: pausing
+  // mid-loop must neither cancel the loop nor wrap it.
+  function checkLoop() {
+    if (!loopEnabled || lastPolled.paused || seekRunning) return;
+    const range = loopRange();
+    if (!range) return;
+    if (lastPolled.time >= range.end) {
+      requestSeek(range.start, { keepCueCursor: true });
+    }
+  }
+
+  function renderLoop() {
+    const length = lastPolled.length || 0;
+    const pct = (t) => (length > 0 ? clamp((t / length) * 100, 0, 100) : 0);
+    const range = loopRange();
+
+    loopEdgeAEl.classList.toggle('visible', loopA !== null && length > 0);
+    if (loopA !== null) loopEdgeAEl.style.left = `${pct(loopA)}%`;
+    loopEdgeBEl.classList.toggle('visible', loopB !== null && length > 0);
+    if (loopB !== null) loopEdgeBEl.style.left = `${pct(loopB)}%`;
+
+    if (range && length > 0) {
+      loopRegionEl.style.left = `${pct(range.start)}%`;
+      loopRegionEl.style.width = `${pct(range.end) - pct(range.start)}%`;
+      loopRegionEl.classList.add('visible');
+      loopRegionEl.classList.toggle('armed', loopEnabled);
+    } else {
+      loopRegionEl.classList.remove('visible', 'armed');
+    }
+
+    const label = range
+      ? `Loop ${formatTime(range.start)}–${formatTime(range.end)}${loopEnabled ? ' ⟲' : ' (off)'}`
+      : '';
+    loopChipEl.textContent = label;
+    loopChipEl.classList.toggle('visible', !!label);
+    loopChipEl.classList.toggle('armed', loopEnabled);
+  }
+
+  function renderCuePins() {
+    const length = lastPolled.length || 0;
+    cuePinsEl.replaceChildren();
+    if (length <= 0) return;
+
+    cues.forEach((cue, index) => {
+      const pin = document.createElement('div');
+      pin.className = 'cue-pin';
+      if (cue.note) pin.classList.add('noted');
+      if (index === activeCueIndex) pin.classList.add('active');
+      pin.style.left = `${clamp((cue.t / length) * 100, 0, 100)}%`;
+
+      pin.addEventListener('mousedown', (e) => e.stopPropagation());
+      pin.addEventListener('mousemove', (e) => e.stopPropagation());
+      pin.addEventListener('click', (e) => {
+        e.stopPropagation();
+        seekToCue(index);
+      });
+      pin.addEventListener('mouseenter', () => {
+        hideGhost(); // the pin sits under the track; the ghost line here is just noise
+        openHoverCard(pinPixelX(pin), [buildCueCardRow(cue, index)], pin);
+      });
+      pin.addEventListener('mouseleave', scheduleHideHoverCard);
+      cuePinsEl.appendChild(pin);
+    });
+  }
+
+  function pinPixelX(pin) {
+    return pin.getBoundingClientRect().left + pin.offsetWidth / 2 - scrubTrack.getBoundingClientRect().left;
+  }
+
+  function buildCueCardRow(cue, index) {
+    const row = document.createElement('div');
+    row.className = 'hc-row';
+
+    const dot = document.createElement('div');
+    dot.className = 'hc-dot';
+    dot.style.background = 'var(--cue)';
+    row.appendChild(dot);
+
+    const label = document.createElement('div');
+    label.className = 'hc-label';
+    label.textContent = cue.note || `Cue ${index + 1}`;
+    row.appendChild(label);
+
+    const time = document.createElement('div');
+    time.className = 'hc-time';
+    time.textContent = formatTime(cue.t);
+    row.appendChild(time);
+
+    row.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideHoverCard();
+      seekToCue(index);
+    });
+    return row;
+  }
+
+  function renderCueList() {
+    cuesToggleEl.textContent = `Cues (${cues.length}) ${cuesExpanded ? '▾' : '▸'}`;
+    cuesListEl.replaceChildren();
+
+    if (!cues.length) {
+      const empty = document.createElement('div');
+      empty.className = 'cue-empty';
+      empty.textContent = 'No cues yet — press M while watching to drop one.';
+      cuesListEl.appendChild(empty);
+    }
+
+    cues.forEach((cue, index) => {
+      const row = document.createElement('div');
+      row.className = `cue-row${index === activeCueIndex ? ' active' : ''}`;
+
+      const num = document.createElement('span');
+      num.className = 'cue-num';
+      num.textContent = String(index + 1);
+      row.appendChild(num);
+
+      const time = document.createElement('span');
+      time.className = 'cue-time';
+      time.textContent = formatTime(cue.t);
+      time.title = 'Jump to this cue';
+      time.addEventListener('click', () => seekToCue(index));
+      row.appendChild(time);
+
+      // Notes are edited in place and never block placement — typing here only
+      // repaints the pins, so the field keeps focus while you write.
+      const note = document.createElement('input');
+      note.className = 'cue-note';
+      note.value = cue.note || '';
+      note.placeholder = 'note…';
+      note.addEventListener('input', () => {
+        cue.note = note.value;
+        saveCues();
+        renderCuePins();
+      });
+      note.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === 'Escape') note.blur();
+      });
+      row.appendChild(note);
+
+      const del = document.createElement('button');
+      del.className = 'cue-del';
+      del.textContent = '×';
+      del.title = 'Delete cue';
+      del.addEventListener('click', () => deleteCue(index));
+      row.appendChild(del);
+
+      cuesListEl.appendChild(row);
+    });
+
+    cuesListEl.appendChild(exportAreaEl);
+
+    const actions = document.createElement('div');
+    actions.className = 'cue-actions';
+
+    const exportBtn = document.createElement('button');
+    exportBtn.textContent = 'Copy as text';
+    exportBtn.disabled = cues.length === 0;
+    exportBtn.addEventListener('click', () => exportCues(exportBtn));
+    actions.appendChild(exportBtn);
+
+    const clearBtn = document.createElement('button');
+    clearBtn.textContent = 'Clear all';
+    clearBtn.disabled = cues.length === 0;
+    clearBtn.addEventListener('click', () => {
+      cues = [];
+      activeCueIndex = null;
+      saveCues();
+      renderCues();
+    });
+    actions.appendChild(clearBtn);
+
+    cuesListEl.appendChild(actions);
+  }
+
+  function renderCues() {
+    renderCuePins();
+    renderCueList();
+  }
+
+  // `MM:SS — note`, one line per cue. This exact shape is the point: it pastes
+  // straight into a YouTube description as chapter markers.
+  function cuesAsText() {
+    // A cue with no note emits just the timestamp — the brief's `MM:SS — note`
+    // shape with an empty note would leave a dangling separator on every line
+    // you'd then have to clean out of a YouTube description by hand.
+    return cues.map((c) => (c.note ? `${formatTime(c.t)} — ${c.note}` : formatTime(c.t))).join('\n');
+  }
+
+  // Export always puts the text on screen, selected, and only *then* tries the
+  // clipboard. `navigator.clipboard.writeText` needs transient user activation
+  // and can be refused for reasons the page can't see, so making the copy the
+  // only delivery would mean an export that silently does nothing. With the
+  // textarea there, Ctrl+C always works even when the API says no.
+  async function exportCues(button) {
+    const text = cuesAsText();
+    exportAreaEl.value = text;
+    exportAreaEl.classList.add('visible');
+    exportAreaEl.focus();
+    exportAreaEl.select();
+
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch (err) {
+      copied = false;
+    }
+    button.textContent = copied ? 'Copied ✓' : 'Selected — Ctrl+C';
+    setTimeout(() => {
+      button.textContent = 'Copy as text';
+    }, 2000);
+  }
+
+  cuesToggleEl.addEventListener('click', () => {
+    cuesExpanded = !cuesExpanded;
+    cuesPanelEl.classList.toggle('expanded', cuesExpanded);
+    renderCueList();
+  });
 
   // --- Playback writes ---
 
@@ -1547,13 +2192,17 @@
     }
   }
 
-  async function doSeek(target) {
+  // `holdPaused` leaves playback paused after landing instead of restoring the
+  // previous play state. Cue navigation needs that, and it has to happen inside
+  // this function: a separate pause write afterwards would be a second path
+  // through the mutex and could interleave with the seek's own resume.
+  async function doSeek(target, holdPaused) {
     return withMutex(async () => {
       const wasPlaying = !lastPolled.paused;
       try {
         await postPlayback({ paused: true });
         await postPlayback({ time: target });
-        if (wasPlaying) {
+        if (wasPlaying && !holdPaused) {
           await waitForSeekSettled();
           await postPlayback({ paused: false });
         }
@@ -1563,17 +2212,23 @@
     });
   }
 
-  async function requestSeek(target) {
+  async function requestSeek(target, options = {}) {
+    // Any seek that isn't cue navigation breaks the cue cursor — the user has
+    // moved somewhere of their own accord, so N should re-derive from position.
+    if (!options.keepCueCursor) activeCueIndex = null;
+
     const length = lastPolled.length || 0;
     pendingSeekTarget = clamp(target, 0, length);
+    pendingSeekHold = !!options.holdPaused;
     if (seekRunning) return;
     seekRunning = true;
     try {
       while (pendingSeekTarget !== null) {
         currentSeekTarget = pendingSeekTarget;
+        const holdPaused = pendingSeekHold;
         pendingSeekTarget = null;
         renderTransport();
-        await doSeek(currentSeekTarget);
+        await doSeek(currentSeekTarget, holdPaused);
       }
     } finally {
       seekRunning = false;
@@ -1734,6 +2389,27 @@
     } else if (e.key === '.' || e.key === '>') {
       e.preventDefault();
       stepEvent(1);
+    } else if (e.key === 'm' || e.key === 'M') {
+      e.preventDefault();
+      placeCue();
+    } else if (e.key === 'n' || e.key === 'N') {
+      e.preventDefault();
+      gotoCue(1);
+    } else if (e.key === 'b' || e.key === 'B') {
+      e.preventDefault();
+      gotoCue(-1);
+    } else if (e.key === '[') {
+      e.preventDefault();
+      setLoopPoint('a');
+    } else if (e.key === ']') {
+      e.preventDefault();
+      setLoopPoint('b');
+    } else if (e.key === 'l' || e.key === 'L') {
+      e.preventDefault();
+      toggleLoop();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      clearLoop();
     }
   });
 
@@ -1779,12 +2455,14 @@
           optimisticSpeed = null;
         }
         renderTransport();
+        checkLoop();
         if (!wasConnected) handleNewGame();
       } else {
         setState('no-replay', 'No replay loaded');
         clearTransportDisplay();
         clearRosterDisplay();
         clearEventsDisplay();
+        clearCuesDisplay();
         gameModeKnown = false;
         gameModeEl.textContent = '—';
         lastProcessId = null;
@@ -1796,6 +2474,7 @@
       clearTransportDisplay();
       clearRosterDisplay();
       clearEventsDisplay();
+      clearCuesDisplay();
       gameModeKnown = false;
       gameModeEl.textContent = '—';
       lastProcessId = null;
@@ -1817,6 +2496,7 @@
     const width = scrubTrack.getBoundingClientRect().width;
     if (width <= 0 || Math.abs(width - lastMarkerTrackWidth) < 1) return;
     renderMarkers();
+    renderCuePins();
   }
 
   new ResizeObserver(remeasureMarkers).observe(scrubTrack);

@@ -53,6 +53,24 @@ cumulative event list, then seeks back. Cached per (gameMode, length) in
 new replay visibly jumps the game to the end and back, which is disruptive if
 it happens while recording. No fix known that doesn't lose the event list.
 
+### [bug] Gnar's transform 404s the portrait route once per second
+
+While Gnar is transformed, `/liveclientdata/playerlist` reports
+`championName: "Mega Gnar"`, which is not a Data Dragon champion id, so
+`/portraits/Mega%20Gnar.png` 404s. The roster re-renders at 1Hz, so it retries
+forever and fills the browser console with 404s during narration. Spotted
+during brief 005 testing; belongs to brief 003's roster code, not 005. Fix is
+probably an alias in `normalizeChampionKey` (`server.js`) mapping transform
+names back to the base champion — worth checking whether Elise, Nidalee, Jayce
+and Karma report similarly.
+
+### [annoyance] Cue lead-in is not editable
+
+Brief 005 asks for a configurable lead-in and ships the storage for it: each
+cue carries a `lead` field, persisted and honoured on navigation. There's just
+no UI to change it, so every cue uses the 2s default. A small number field next
+to the note in the cue list would finish it.
+
 ### [annoyance] Two speed buttons can look active at once
 
 `.speed-btn.primary` (the 0.5× recommendation) draws an accent border while

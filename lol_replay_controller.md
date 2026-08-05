@@ -16,8 +16,9 @@ Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
 
 ## Now
 
-- Brief 004 complete. Briefs are started **manually, one at a time** —
-  nothing auto-advances. See [briefs/brief_log.md](./briefs/brief_log.md).
+- Brief 005 complete; 006 is the last one in the queue. Briefs are started
+  **manually, one at a time** — nothing auto-advances. See
+  [briefs/brief_log.md](./briefs/brief_log.md).
 - Timeline fidelity pass (phases 1–2 of
   [ui_polish_plan.md](./ui_polish_plan.md)) landed 2026-08-05, outside the
   brief queue. Phases 3–4 still open.
@@ -34,7 +35,7 @@ Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
 | 002 | Transport control | complete | 001 |
 | 003 | Player lock + keystroke bridge | complete (partial) | 001 |
 | 004 | Event timeline | complete | 002 |
-| 005 | Cue points + A/B loop | ready | 002, 004 |
+| 005 | Cue points + A/B loop | complete | 002, 004 |
 | 006 | HUD toggles + camera presets | ready | 001 |
 
 Briefs 002 and 003 both only need 001, so either can go second. 006 is
@@ -69,7 +70,7 @@ No brief starts itself. Nothing in the queue runs without step 1.
 
 ## Stats
 
-- Briefs complete: 4 / 6
+- Briefs complete: 5 / 6
 - First working build: 2026-08-04
 - First recorded VO using the panel: TBD
 
@@ -106,6 +107,13 @@ No brief starts itself. Nothing in the queue runs without step 1.
   deduping on content (event name + time bucket + killer/victim/recipient)
   instead. **Anything that reads this endpoint must not key by `EventID`
   alone.**
+- **There is no stable game identifier anywhere in the API.** Checked all 30
+  paths in `/swagger/v3/openapi.json` during brief 005: no match ID, no replay
+  filename, nothing that survives a client restart. `processID` is an OS
+  process id and changes every launch. Anything that persists per-replay must
+  use the `gameMode` + `length` composite — see `replayIdentity()` in
+  `index.html`, which brief 004's event cache and brief 005's cues both key off
+  so they can't drift apart.
 - `/replay/game` (Replay API) only returns `processID` — no `gameMode`, no
   `length`, per the real `Game` schema in `/swagger/v3/openapi.json`. `length`
   lives on `/replay/playback` (matches original brief). `gameMode` isn't in the
