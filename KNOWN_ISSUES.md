@@ -152,10 +152,19 @@ POST /replay/render
   "cameraMode": "fps",
   "selectionName": "<riotIdGameName>",
   "cameraAttached": true,
-  "selectionOffset": { "x": 0, "y": 900, "z": -600 },
+  "selectionOffset": { "x": 0, "y": 1700, "z": -1150 },
   "cameraRotation": { "x": 0, "y": 56, "z": 0 }
 }
 ```
+
+Those offset and rotation values are **confirmed good on screen**, not derived.
+`cameraRotation` is `(yaw, pitch, roll)` in `(x, y, z)`. Yaw `0` with the offset
+on **−z** is the combination that centres the champion; the other three cardinal
+offset directions all put him off-frame. Two other framings that also work:
+`selectionOffset {0, 2000, 0}` with pitch `90` gives a centred top-down (yaw is
+irrelevant looking straight down, so it is the safe fallback if a framing ever
+looks wrong), and scaling `{y, z}` while holding the 1.48 ratio changes distance
+without disturbing the aim.
 
 Set once, no polling. Verified: camera tracked a champion across 7 samples with
 zero further requests, `y≈953` confirming the `y:900` offset sits above the
@@ -169,8 +178,15 @@ champion's ground level of ~53.
 - `cameraRotation` aims it. For a **fixed** offset the required aim is a
   constant, because the direction from camera to champion is always −offset
   regardless of where the champion is — so it is set once, not recomputed.
-  Offset `{y:900, z:-600}` wants pitch 56.3°, and the game's own default camera
-  sits at pitch 56.
+  Pitch 56 matches an offset whose `y:z` ratio is ~1.48, which is also the
+  game's own default camera pitch.
+
+**Getting the aim right is fiddly and worth doing empirically.** Yaw's world
+direction is not documented and cannot be read back — the API reports the
+rotation you set, never where the camera is actually looking. Guessing cost
+several rounds. The fast method is to cycle the four cardinal offset directions
+at a fixed pitch and look at the screen; the right one is obvious and the other
+three are badly off-frame.
 
 **Send all of it in one POST.** `selectionName` clears itself spontaneously, and
 a later POST of `selectionOffset` *without* `selectionName` freezes the follow —
