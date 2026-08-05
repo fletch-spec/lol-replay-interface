@@ -1,0 +1,113 @@
+# LoL Replay Controller
+
+<!-- project-type: tasks-and-stats -->
+<!-- project-category: gaming -->
+<!-- repo: TBD -->
+
+Browser-based control panel for League of Legends replays. Runs on monitor 2,
+drives the replay client on monitor 1, so voiceover can be recorded live in a
+single pass while OBS captures the game.
+
+**Scope: live replay control only.** Not an editor, not a clip exporter, not a
+stats tool. If a feature doesn't help someone talk over a replay in real time,
+it's out.
+
+Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
+
+## Now
+
+- Brief 004 complete. Briefs are started **manually, one at a time** —
+  nothing auto-advances. See [briefs/brief_log.md](./briefs/brief_log.md).
+
+## Brief Queue
+
+| # | Brief | State | Depends on |
+|---|---|---|---|
+| 001 | Replay API proxy + panel shell | complete | — |
+| 002 | Transport control | complete | 001 |
+| 003 | Player lock + keystroke bridge | complete (partial) | 001 |
+| 004 | Event timeline | complete | 002 |
+| 005 | Cue points + A/B loop | ready | 002, 004 |
+| 006 | HUD toggles + camera presets | ready | 001 |
+
+Briefs 002 and 003 both only need 001, so either can go second. 006 is
+independent of the timeline work and can be pulled forward if you want a
+cinematic pass sooner.
+
+## How To Start A Brief
+
+1. Open `briefs/ready/brief-NNN.md`
+2. Change `state: ready` → `state: in-progress`, set `updated:`
+3. Append a line to `brief_log.md`
+4. Hand the brief to Claude as the whole instruction — the brief is the spec
+5. On finish: `state: complete`, move to `briefs/archive/`, log it
+
+No brief starts itself. Nothing in the queue runs without step 1.
+
+## Stack
+
+- **Helper**: Node + Express. Proxies `https://127.0.0.1:2999`, bypasses the
+  self-signed cert, adds CORS, caches Data Dragon champion portraits locally.
+  No keystroke injection — see Notes, synthetic input is blocked by the client.
+- **Panel**: single-file HTML + vanilla JS, no build step. Refresh to iterate.
+- **Target**: Windows (LoL is Windows-only).
+
+## Constraints
+
+- Replay API must be enabled: `EnableReplayApi=1` under `[General]` in
+  `Config/game.cfg`. Nothing works before this.
+- The client generates its own spec at `https://127.0.0.1:2999/docs` — that is
+  the authoritative field list, not any brief in this folder.
+- Seeks have ~100-200ms lag and are visible on capture. Debounce every write.
+
+## Stats
+
+- Briefs complete: 4 / 6
+- First working build: 2026-08-04
+- First recorded VO using the panel: TBD
+
+## Notes
+
+- **Spectator hotkeys don't work — confirmed dead end.** Brief 003 spiked three
+  synthetic-input methods (PostMessage, SendInput keyboard, SendInput mouse
+  double-click) with genuinely confirmed window focus each time. Zero effect on
+  camera state in every case. The client (almost certainly Vanguard) blocks
+  synthetic input generally — not a targeting or timing problem, don't re-try
+  this approach.
+- **Camera follow-cam: open issue, not solved.** `POST /replay/render` with
+  `{selectionName, cameraAttached: true}` is a real documented API (found via
+  fletch-spec/lol-path-mapper) and reliably selects the target champion
+  (`selectionName` echoes back correctly, verified repeatedly) — but the camera
+  itself does not visibly follow them. Tested `cameraMode`: `top` (shipped
+  default, no crash, unconfirmed if it's a visible no-op or does something
+  subtle), `focus` (selects the champion's info/stat frame, camera stays
+  parked), `path` (no visible change). `tps` caused the replay to close
+  entirely on one attempt — recovered on its own, not retried. Brief 003 ships
+  with the fallback the brief itself anticipated: portrait grid, live KDA/CS,
+  click-to-select with a lock indicator driven by real polled state — no
+  follow-cam. **Brief 006 needs to know this before building camera presets**:
+  don't assume `cameraAttached` gives a working follow, and treat `cameraMode`
+  changes as having a small but real crash risk until proven otherwise.
+- `/liveclientdata/allgamedata` works during replays and carries the event log.
+  That's what makes the timeline cheap to build.
+- **`/liveclientdata/eventdata`'s `EventID` is not stable across seeks.** The
+  client reassigns a new `EventID` to the same real event every time playback
+  re-passes that point in game-time — confirmed directly (the same kill at
+  ~81.5s appeared under 4 different `EventID`s after repeated seeking). Brief
+  004 originally deduped by `EventID` per its own brief text; that was wrong
+  and inflated the event count 4-5x with visually-duplicate entries. Fixed by
+  deduping on content (event name + time bucket + killer/victim/recipient)
+  instead. **Anything that reads this endpoint must not key by `EventID`
+  alone.**
+- `/replay/game` (Replay API) only returns `processID` — no `gameMode`, no
+  `length`, per the real `Game` schema in `/swagger/v3/openapi.json`. `length`
+  lives on `/replay/playback` (matches original brief). `gameMode` isn't in the
+  Replay API at all — it's on `/liveclientdata/gamestats`, a separate endpoint
+  family on the same port. Brief 001's panel pulls game mode from there.
+- Stretch, not scoped: Stream Deck mapped to the helper's HTTP endpoints. Better
+  ergonomics than browser hotkeys, since the panel loses focus constantly.
+- Another app on this machine ("a different replay mapping application") can
+  independently drive the same replay client via the same API. If live testing
+  shows time/paused/speed changing with no corresponding request from this
+  panel, that's the likely cause, not a bug here. Confirmed during brief 002
+  testing — pause it before testing this panel's transport for clean results.

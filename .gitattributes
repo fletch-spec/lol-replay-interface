@@ -1,0 +1,4 @@
+# The working tree is LF throughout. Windows git defaults to autocrlf=true,
+# which would rewrite every file on checkout and show the whole repo as changed.
+* text=auto eol=lf
+*.png binary

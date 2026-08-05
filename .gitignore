@@ -1,0 +1,6 @@
+node_modules/
+
+# Champion portraits are downloaded from Data Dragon on first request and
+# regenerate themselves. Keeping them out means the repo doesn't carry a copy
+# of Riot's art that goes stale every patch.
+app/cache/
