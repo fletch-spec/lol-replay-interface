@@ -88,7 +88,22 @@ No brief starts itself. Nothing in the queue runs without step 1.
   camera state in every case. The client (almost certainly Vanguard) blocks
   synthetic input generally — not a targeting or timing problem, don't re-try
   this approach.
-- **Camera follow-cam: open issue, not solved.** `POST /replay/render` with
+- **Camera follow-cam: SOLVED 2026-08-05** — `cameraMode: "fps"` once, then
+  re-POST `{selectionName, selectionOffset}` on a timer. Each POST snaps the
+  camera to the champion's current position plus the offset; repeating it
+  synthesises a follow. `selectionOffset` is a no-op in `top` mode (directed
+  rails), which is why three briefs missed it. **`cameraMode: "tps"` closes the
+  game — reproduced twice, do not send it.** `cameraAttached` is a status
+  readout, not a control. Full recipe and caveats in
+  [KNOWN_ISSUES.md](./KNOWN_ISSUES.md).
+- **Read `/Help?format=Full&target=<Type>` before trusting any brief's field
+  list.** It carries per-enum-value descriptions the swagger JSON omits — the
+  `HudCameraMode` enum shows as empty in swagger but `/Help` names all five
+  modes. This is what finally cracked the camera problem.
+- **Partial POSTs are supported.** `PostReplayRender`: "Allows modifying the
+  current render properties. All values are optional." Same for playback. Brief
+  006 does not need read-modify-write.
+- **Camera follow-cam: the superseded brief-003 investigation.** `POST /replay/render` with
   `{selectionName, cameraAttached: true}` is a real documented API (found via
   fletch-spec/lol-path-mapper) and reliably selects the target champion
   (`selectionName` echoes back correctly, verified repeatedly) — but the camera

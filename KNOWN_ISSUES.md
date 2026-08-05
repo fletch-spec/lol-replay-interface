@@ -15,15 +15,54 @@ Format: `[severity] title` — severity is `blocker` / `bug` / `annoyance` /
 
 ## Open
 
-### [blocker] Camera does not follow the selected champion
+### [blocker] `cameraMode: "tps"` reliably closes the game — do not send it
 
-`cameraAttached: true` selects the champion but the camera stays parked, in
-every `cameraMode` tested. Blocks brief 006, which must resolve it before
-building camera presets — and must treat `cameraMode` writes as carrying real
-crash risk (`tps` closed the replay once). No known workaround.
+Reproduced 2026-08-05, second occurrence. `POST /replay/render
+{"cameraMode":"tps"}` with a valid held selection, paused, was accepted and the
+game process was gone seconds later (`League of Legends.exe` absent,
+`LeagueCrashHandler64` running). Brief 003 hit the same thing and recorded it as
+a one-off worth caution; it is not a one-off, it is 2 for 2. Treat `tps` as
+unusable, not risky.
 
-*Full detail — what was tested and what each mode did — is in the Notes section
-of `lol_replay_controller.md`. Don't restate it here; keep one copy.*
+### [RESOLVED] Follow-cam — solved 2026-08-05, see Resolved section
+
+Superseded. `fps` + repeated `selectionName` + `selectionOffset` works. The
+mode-by-mode findings below stand and are why it took this long to find.
+
+All five documented `HudCameraMode` values are accounted for:
+
+| mode | result |
+|---|---|
+| `top` | shipped default. Camera on the game's own directed rails. |
+| `fps` | **the only mode that visibly moves the camera.** Free camera — but it does not attach to the selection: position was byte-identical across three different selected champions. |
+| `tps` | closes the game. See above. |
+| `focus` | selects the champion's info frame, camera stays parked (brief 003). |
+| `path` | no visible change (brief 003). |
+
+`cameraAttached` is a **status readout, not a control** — its own description is
+a predicate ("True if the camera is attached to an object"), and the `Sequence`
+schema carries a keyframe track for every genuinely writable `Render` field
+including `selectionName` and `selectionOffset` but has **no track for
+`cameraAttached`**. The panel has been writing to it since brief 003 with no
+effect. It reads `true` permanently regardless of selection.
+
+Confirmed on-screen by the user during the same test: switching `cameraMode` via
+the API did not change the in-game camera mode indicator, which stayed on
+"directed camera". The API camera and the spectator client's own directed camera
+appear to be separate systems.
+
+The reason all of this looked like a dead end for three briefs: `selectionOffset`
+is a **no-op in `top` mode**, because there the camera is on the game's own
+directed rails. It only does anything once the camera is free — which is what
+`fps` gives you. Nobody had tried the two together. See the Resolved section.
+
+### [bug] The roster lock indicator can't be trusted
+
+`selectionName` clears itself. Observed twice during testing: it read back as
+the champion's name for several seconds, then went empty on its own with no
+request from the panel. `server.js` polls it once a second to drive the green
+"locked" border, so the border drops off spontaneously — and it was never
+indicating a camera lock in the first place, only a selection.
 
 ### [blocker] Spectator hotkeys cannot be driven — confirmed dead end
 
@@ -102,6 +141,35 @@ it before trusting any transport test result.
 ---
 
 ## Resolved
+
+### [blocker] Follow-cam — SOLVED 2026-08-05
+
+Open since brief 003. The recipe:
+
+1. `POST /replay/render {"cameraMode":"fps"}` — once. This frees the camera from
+   the game's directed rails. **Never `tps`; it closes the game.**
+2. Then repeatedly `POST /replay/render {"selectionName":"<riotIdGameName>",
+   "selectionOffset":{"x":0,"y":900,"z":-600}}` on a timer.
+
+Each POST snaps the camera to that champion's *current* world position plus the
+offset. There is no native follow — `selectionOffset` is a one-shot, verified by
+holding a selection for 5s of playback with the camera frozen. Re-posting at
+400ms synthesises the follow, and the camera tracked a champion smoothly through
+a fight. Verified live: the offset applies exactly (champion ground level
+y≈53 + `y:900` = camera y≈953), and switching `selectionName` between three
+champions put the camera at three distinct, correct map positions.
+
+**`selectionName` must be included in every POST**, not set once — it clears
+itself spontaneously (see the roster-indicator bug above).
+
+**Not yet worked out:** `cameraRotation` is untouched by any of this, so the
+camera keeps whatever angle it had. A usable over-the-shoulder shot needs a
+pitch set alongside the offset. Also unmeasured: what POST rate is smooth enough
+without hammering the client — 400ms tracked visibly but was not tuned.
+
+This changes brief 006 materially. Camera presets are no longer the *only*
+camera control available, and "lock camera to champion" — the thing brief 003
+set out to do and shipped without — is implementable.
 
 ### [bug] Timeline markers were built at the wrong width and never re-measured
 
