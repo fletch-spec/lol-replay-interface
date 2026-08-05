@@ -88,14 +88,21 @@ No brief starts itself. Nothing in the queue runs without step 1.
   camera state in every case. The client (almost certainly Vanguard) blocks
   synthetic input generally — not a targeting or timing problem, don't re-try
   this approach.
-- **Camera follow-cam: SOLVED 2026-08-05** — `cameraMode: "fps"` once, then
-  re-POST `{selectionName, selectionOffset}` on a timer. Each POST snaps the
-  camera to the champion's current position plus the offset; repeating it
-  synthesises a follow. `selectionOffset` is a no-op in `top` mode (directed
-  rails), which is why three briefs missed it. **`cameraMode: "tps"` closes the
-  game — reproduced twice, do not send it.** `cameraAttached` is a status
-  readout, not a control. Full recipe and caveats in
+- **Camera follow-cam: SOLVED 2026-08-05** — one POST to `/replay/render` with
+  `cameraMode: "fps"` + `selectionName` + `cameraAttached: true` +
+  `selectionOffset` + `cameraRotation`. Native follow, no polling. The
+  load-bearing part is `fps`: in the default `top` mode the camera is on the
+  game's directed rails and *every* camera field is inert, which is why three
+  briefs concluded the API couldn't do this. **`cameraMode: "tps"` closes the
+  game — reproduced twice, do not send it.** Full recipe, framing maths and the
+  two wrong conclusions that preceded it are in
   [KNOWN_ISSUES.md](./KNOWN_ISSUES.md).
+- **Riot ships the reference implementation:
+  <https://github.com/RiotGames/leaguedirector>.** Open source, drives this
+  exact API. Its README documents "Attach camera to champion or minion" as a
+  supported feature. Reading it corrected two confident-but-wrong conclusions
+  reached from black-box testing alone. Check it before deciding this API can't
+  do something.
 - **Read `/Help?format=Full&target=<Type>` before trusting any brief's field
   list.** It carries per-enum-value descriptions the swagger JSON omits — the
   `HudCameraMode` enum shows as empty in swagger but `/Help` names all five

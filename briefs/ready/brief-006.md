@@ -87,6 +87,33 @@ your *only* camera control and this brief becomes the priority — build it righ
 after 002 and invest more in it. Check `brief_log.md` for the 003 outcome before
 sizing this.
 
+**UPDATE 2026-08-05 — read this before sizing the brief.** Both premises above
+are now out of date:
+
+- **Follow-cam works.** Solved outside the brief queue; full recipe in
+  `KNOWN_ISSUES.md`. One POST: `cameraMode:"fps"` + `selectionName` +
+  `cameraAttached:true` + `selectionOffset` + `cameraRotation`. So presets are
+  *not* the only camera control, and "lock camera to champion" — brief 003's
+  original goal — is now a one-liner this brief should wire into the roster.
+- **`cameraMode:"tps"` closes the game.** Reproduced twice. Do not send it.
+  `fps` is safe and is what the follow-cam needs.
+- **Partial POSTs are supported**, documented: "Allows modifying the current
+  render properties. All values are optional." The read-modify-write fallback in
+  Hardest Part is not needed. Note the API returns **HTTP 200 for unknown field
+  names and silently ignores them** — a typo in the toggle grid will look like
+  success, so verify each toggle by reading the field back, not by status code.
+- **Read `/Help?format=Full&target=Render`**, not the field list in these Notes.
+  It carries descriptions the swagger JSON omits entirely.
+
+**Requested feature: zoom slider.** Follow-cam framing is set by
+`selectionOffset` distance, and the first fixed value tested read as too close.
+Scaling the offset while holding the `y:z` ratio keeps the aim constant — e.g.
+`{y:900,z:-600}`, `{y:1800,z:-1200}` and `{y:2700,z:-1800}` are all pitch 56.3°,
+just further out. So a single "distance" slider can drive both offset components
+from one number without ever recomputing rotation. `fieldOfView` (default 45) is
+a second, different kind of zoom — expose whichever reads better, but they are
+not interchangeable.
+
 **Camera during narration.** Free-flying the camera while talking is genuinely
 hard — most people can do one or the other. Fixed presets you snap between are
 the realistic workflow. Favour more presets over smoother manual control.

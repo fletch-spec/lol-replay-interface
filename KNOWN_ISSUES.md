@@ -144,32 +144,67 @@ it before trusting any transport test result.
 
 ### [blocker] Follow-cam — SOLVED 2026-08-05
 
-Open since brief 003. The recipe:
+Open since brief 003. It is a **native follow**, and it is one request:
 
-1. `POST /replay/render {"cameraMode":"fps"}` — once. This frees the camera from
-   the game's directed rails. **Never `tps`; it closes the game.**
-2. Then repeatedly `POST /replay/render {"selectionName":"<riotIdGameName>",
-   "selectionOffset":{"x":0,"y":900,"z":-600}}` on a timer.
+```json
+POST /replay/render
+{
+  "cameraMode": "fps",
+  "selectionName": "<riotIdGameName>",
+  "cameraAttached": true,
+  "selectionOffset": { "x": 0, "y": 900, "z": -600 },
+  "cameraRotation": { "x": 0, "y": 56, "z": 0 }
+}
+```
 
-Each POST snaps the camera to that champion's *current* world position plus the
-offset. There is no native follow — `selectionOffset` is a one-shot, verified by
-holding a selection for 5s of playback with the camera frozen. Re-posting at
-400ms synthesises the follow, and the camera tracked a champion smoothly through
-a fight. Verified live: the offset applies exactly (champion ground level
-y≈53 + `y:900` = camera y≈953), and switching `selectionName` between three
-champions put the camera at three distinct, correct map positions.
+Set once, no polling. Verified: camera tracked a champion across 7 samples with
+zero further requests, `y≈953` confirming the `y:900` offset sits above the
+champion's ground level of ~53.
 
-**`selectionName` must be included in every POST**, not set once — it clears
-itself spontaneously (see the roster-indicator bug above).
+- `cameraMode: "fps"` frees the camera from the game's directed rails. This is
+  the load-bearing part — every other field is inert in `top` mode.
+  **Never `tps`; it closes the game.**
+- `cameraAttached: true` is what makes it follow.
+- `selectionOffset` frames the shot relative to the champion.
+- `cameraRotation` aims it. For a **fixed** offset the required aim is a
+  constant, because the direction from camera to champion is always −offset
+  regardless of where the champion is — so it is set once, not recomputed.
+  Offset `{y:900, z:-600}` wants pitch 56.3°, and the game's own default camera
+  sits at pitch 56.
 
-**Not yet worked out:** `cameraRotation` is untouched by any of this, so the
-camera keeps whatever angle it had. A usable over-the-shoulder shot needs a
-pitch set alongside the offset. Also unmeasured: what POST rate is smooth enough
-without hammering the client — 400ms tracked visibly but was not tuned.
+**Send all of it in one POST.** `selectionName` clears itself spontaneously, and
+a later POST of `selectionOffset` *without* `selectionName` freezes the follow —
+there is nothing left to attach to. Note the reverse is also true: once
+attached, the follow keeps running even after `selectionName` reads back empty,
+so the empty readback is a display quirk, not a detach.
+
+**Mouse-look overrides `cameraRotation`.** In `fps` mode the game's own First
+Person Camera hotkeys are live (numpad 4/5/6/8 + mouse, rebindable under
+Options → Hotkeys → First Person Camera). Confirmed live: a rotation set to
+`{0,56,0}` read back as `{21.1, 48.8, 0}` after the user looked around, and the
+camera's height had been free-flown too. `cameraLockX/Y/Z` ("Lock FPS Camera at
+x axis") are the documented guardrail for this and are **not yet tested**.
+
+#### Two things this entry previously got wrong
+
+Recorded because the reasoning was plausible and someone will re-derive it:
+
+1. **"`cameraAttached` is a status readout, not a control."** Wrong. It only
+   looks inert because it was tested exclusively in `top` mode, where the camera
+   is on rails and nothing camera-related does anything. Riot's own League
+   Director exposes it as a writable checkbox.
+2. **"There is no native follow; re-POST `selectionOffset` on a timer."** The
+   polling workaround does work, but it is unnecessary. It came from testing
+   `selectionOffset` without `cameraAttached`.
+
+**Reference implementation:** <https://github.com/RiotGames/leaguedirector> —
+Riot's own open-source tool against this exact API. Its README documents
+"Attach camera to champion or minion" and the first-person camera controls.
+Check it before concluding anything about this API is impossible.
 
 This changes brief 006 materially. Camera presets are no longer the *only*
-camera control available, and "lock camera to champion" — the thing brief 003
-set out to do and shipped without — is implementable.
+camera control, and "lock camera to champion" — the thing brief 003 set out to
+do and shipped without — is a single request.
 
 ### [bug] Timeline markers were built at the wrong width and never re-measured
 
