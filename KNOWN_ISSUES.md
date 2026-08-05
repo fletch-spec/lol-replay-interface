@@ -17,21 +17,21 @@ Format: `[severity] title` — severity is `blocker` / `bug` / `annoyance` /
 
 ### [blocker] Camera does not follow the selected champion
 
-`POST /replay/render` with `{selectionName, cameraAttached: true}` selects the
-champion reliably (`selectionName` echoes back, verified repeatedly) but the
-camera stays parked. Tested `cameraMode`: `top`, `focus`, `path` — no visible
-follow. `tps` closed the replay entirely on one attempt.
+`cameraAttached: true` selects the champion but the camera stays parked, in
+every `cameraMode` tested. Blocks brief 006, which must resolve it before
+building camera presets — and must treat `cameraMode` writes as carrying real
+crash risk (`tps` closed the replay once). No known workaround.
 
-Brief 003 shipped the portrait-grid fallback instead. Brief 006 needs to resolve
-this before building camera presets, and must treat `cameraMode` writes as
-carrying real crash risk. No known workaround.
+*Full detail — what was tested and what each mode did — is in the Notes section
+of `lol_replay_controller.md`. Don't restate it here; keep one copy.*
 
 ### [blocker] Spectator hotkeys cannot be driven — confirmed dead end
 
-PostMessage, SendInput keyboard, and SendInput mouse double-click all tested
-with confirmed window focus. Zero effect. Client-side input is blocked, almost
-certainly by Vanguard. Do not re-attempt synthetic input of any kind. Recorded
-here so it doesn't get retried, not because it's actionable.
+Synthetic input is blocked by the client, almost certainly Vanguard. Three
+methods tested with confirmed focus, zero effect. Listed so it doesn't get
+retried, not because it's actionable.
+
+*Full detail in the Notes section of `lol_replay_controller.md`.*
 
 ### [unverified] Objective events may be missing from the event feed
 
@@ -104,11 +104,9 @@ markers now expand into a hover card with one clickable row per event.
 
 ### [bug] `EventID` is not stable across seeks
 
-Fixed in brief 004, same day it shipped. The client reassigns a new `EventID` to
-the same real event every time playback re-passes that point — the same kill
-appeared under four IDs after repeated seeking. Dedupe by content fingerprint
-(name + time bucket + killer/victim), never by `EventID`. Anything new that
-reads `/liveclientdata/eventdata` inherits this constraint.
+Fixed in brief 004, same day it shipped. Dedupe by content fingerprint, never by
+`EventID` — anything new that reads `/liveclientdata/eventdata` inherits this.
+*Full detail in the Notes section of `lol_replay_controller.md`.*
 
 ### [bug] Structure kills displayed raw internal IDs
 

@@ -18,6 +18,13 @@ Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
 
 - Brief 004 complete. Briefs are started **manually, one at a time** —
   nothing auto-advances. See [briefs/brief_log.md](./briefs/brief_log.md).
+- Timeline fidelity pass (phases 1–2 of
+  [ui_polish_plan.md](./ui_polish_plan.md)) landed 2026-08-05, outside the
+  brief queue. Phases 3–4 still open.
+- Open problems live in [KNOWN_ISSUES.md](./KNOWN_ISSUES.md). The Notes section
+  below stays the reference for *confirmed API and client behaviour*; that file
+  tracks what's currently broken or unverified. One copy each — the issues file
+  points here rather than restating.
 
 ## Brief Queue
 
