@@ -16,7 +16,7 @@ Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
 
 ## Now
 
-- Brief 005 complete; 006 is the last one in the queue. Briefs are started
+- Brief 005 complete; 006 and 007 are queued. Briefs are started
   **manually, one at a time** — nothing auto-advances. See
   [briefs/brief_log.md](./briefs/brief_log.md).
 - Timeline fidelity pass (phases 1–2 of
@@ -37,10 +37,16 @@ Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
 | 004 | Event timeline | complete | 002 |
 | 005 | Cue points + A/B loop | complete | 002, 004 |
 | 006 | HUD toggles + camera presets | ready | 001 |
+| 007 | Clickable controls + layout review | ready | 004, 005 |
 
 Briefs 002 and 003 both only need 001, so either can go second. 006 is
 independent of the timeline work and can be pulled forward if you want a
 cinematic pass sooner.
+
+007 is independent of 006 but interacts with it: 006 adds another block of
+controls that needs somewhere to live. Running 007 last means it lays out
+everything once; running it first means treating "where does a new control
+block go" as part of its deliverable.
 
 ## How To Start A Brief
 
@@ -70,7 +76,7 @@ No brief starts itself. Nothing in the queue runs without step 1.
 
 ## Stats
 
-- Briefs complete: 5 / 6
+- Briefs complete: 5 / 7
 - First working build: 2026-08-04
 - First recorded VO using the panel: TBD
 
