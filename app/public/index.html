@@ -1423,6 +1423,15 @@
     return { x: 0, y: Math.round(FOLLOW_BASE.y * scale), z: Math.round(FOLLOW_BASE.z * scale) };
   }
 
+  // Switching cameraMode resets fieldOfView, so every camera write carries the
+  // FOV forward explicitly — otherwise locking onto a champion silently throws
+  // away whatever the FOV slider was set to.
+  function currentFov() {
+    const fromSlider = Number(fovInputEl.value);
+    if (isFinite(fromSlider) && fromSlider > 0) return fromSlider;
+    return renderState && renderState.fieldOfView ? renderState.fieldOfView : 45;
+  }
+
   async function lockCamera(riotIdGameName) {
     if (lockInFlight) return;
     lockInFlight = true;
@@ -1442,6 +1451,7 @@
           cameraAttached: true,
           selectionOffset: followOffset(),
           cameraRotation: FOLLOW_ROTATION,
+          fieldOfView: currentFov(),
         }),
       });
       lastAction = { name: riotIdGameName, kind: 'camera' };
@@ -1571,6 +1581,7 @@
           cameraAttached: true,
           selectionOffset: followOffset(),
           cameraRotation: FOLLOW_ROTATION,
+          fieldOfView: currentFov(),
         }),
       });
     } catch (err) {
