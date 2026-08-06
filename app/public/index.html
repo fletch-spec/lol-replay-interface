@@ -59,6 +59,29 @@
     opacity: 0.4;
     pointer-events: none;
   }
+  .camera-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--dim);
+  }
+  .camera-bar-label {
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .camera-bar input[type='range'] {
+    flex: 0 1 220px;
+    accent-color: var(--ok);
+    cursor: pointer;
+  }
+  .camera-bar-value {
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    color: var(--text);
+    min-width: 34px;
+  }
+  .camera-bar-hint { margin-left: auto; }
+
   .roster-block {
     display: flex;
     flex-direction: column;
@@ -1026,6 +1049,12 @@
     </div>
 
     <div class="roster disabled" id="roster">
+      <div class="camera-bar">
+        <span class="camera-bar-label">Camera distance</span>
+        <input type="range" id="zoomInput" min="900" max="5200" step="50" value="2052" />
+        <span class="camera-bar-value" id="zoomValue">2052</span>
+        <span class="camera-bar-hint">portrait = camera · name = target frame</span>
+      </div>
       <div class="roster-block">
         <div class="roster-block-label">Blue</div>
         <div class="roster-list" id="blueList"></div>
@@ -1062,6 +1091,8 @@
   const speedPresets = document.getElementById('speedPresets');
 
   const rosterEl = document.getElementById('roster');
+  const zoomInputEl = document.getElementById('zoomInput');
+  const zoomValueEl = document.getElementById('zoomValue');
   const blueListEl = document.getElementById('blueList');
   const redListEl = document.getElementById('redList');
   const BLUE_KEYS = ['1', '2', '3', '4', '5'];
@@ -1234,10 +1265,24 @@
   let lockInFlight = false;
 
   // Follow-cam framing. Confirmed on screen: yaw 0 pairs with an offset on -z.
-  // Scaling y and z together while holding this ratio changes distance without
-  // disturbing the aim, which is what a zoom control should drive.
-  const FOLLOW_OFFSET = { x: 0, y: 1700, z: -1150 };
+  // The zoom slider scales y and z together along this direction — holding the
+  // ratio is what lets distance change without ever re-aiming the camera.
+  const FOLLOW_BASE = { y: 1700, z: -1150 };
+  const FOLLOW_BASE_DISTANCE = Math.hypot(FOLLOW_BASE.y, FOLLOW_BASE.z); // ~2052
   const FOLLOW_ROTATION = { x: 0, y: 56, z: 0 };
+
+  let followDistance = FOLLOW_BASE_DISTANCE;
+  try {
+    const saved = Number(localStorage.getItem('followDistance'));
+    if (isFinite(saved) && saved > 0) followDistance = saved;
+  } catch (err) {
+    // Storage unavailable — the default framing is fine.
+  }
+
+  function followOffset() {
+    const scale = followDistance / FOLLOW_BASE_DISTANCE;
+    return { x: 0, y: Math.round(FOLLOW_BASE.y * scale), z: Math.round(FOLLOW_BASE.z * scale) };
+  }
 
   async function lockCamera(riotIdGameName) {
     if (lockInFlight) return;
@@ -1256,7 +1301,7 @@
           cameraMode: 'fps',
           selectionName: riotIdGameName,
           cameraAttached: true,
-          selectionOffset: FOLLOW_OFFSET,
+          selectionOffset: followOffset(),
           cameraRotation: FOLLOW_ROTATION,
         }),
       });
@@ -1358,6 +1403,57 @@
   // itself spontaneously, so a polled indicator drops out on its own while the
   // camera is still very much locked.
   let lastAction = { name: null, kind: null };
+
+  // Re-frames the live follow when the zoom slider moves. Deliberately not
+  // sharing `lockInFlight` with the roster clicks — that guard drops calls, and
+  // a dropped call here would leave the camera at the wrong distance. Leading
+  // -edge throttle instead, so dragging the slider stays responsive without
+  // firing a request per pixel. `selectionName` has to go in every one of these:
+  // posting selectionOffset on its own detaches the follow.
+  let framingTimer = null;
+
+  function scheduleFramingUpdate() {
+    if (framingTimer) return;
+    framingTimer = setTimeout(() => {
+      framingTimer = null;
+      applyFraming();
+    }, 60);
+  }
+
+  async function applyFraming() {
+    if (lastAction.kind !== 'camera' || !lastAction.name) return;
+    try {
+      await fetch('/api/replay/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cameraMode: 'fps',
+          selectionName: lastAction.name,
+          cameraAttached: true,
+          selectionOffset: followOffset(),
+          cameraRotation: FOLLOW_ROTATION,
+        }),
+      });
+    } catch (err) {
+      // Next slider move or lock reasserts it.
+    }
+  }
+
+  function renderZoom() {
+    zoomInputEl.value = String(Math.round(followDistance));
+    zoomValueEl.textContent = String(Math.round(followDistance));
+  }
+
+  zoomInputEl.addEventListener('input', () => {
+    followDistance = Number(zoomInputEl.value);
+    zoomValueEl.textContent = String(Math.round(followDistance));
+    try {
+      localStorage.setItem('followDistance', String(followDistance));
+    } catch (err) {
+      // Not worth failing the drag over.
+    }
+    scheduleFramingUpdate();
+  });
 
   function renderRosterState() {
     for (const item of document.querySelectorAll('.roster-item')) {
@@ -2611,6 +2707,7 @@
 
   connect();
   renderTransport();
+  renderZoom();
 </script>
 </body>
 </html>
