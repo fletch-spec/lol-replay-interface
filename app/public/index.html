@@ -1147,6 +1147,7 @@
              well past that so you can pull back wider than the normal view. -->
         <input type="range" id="zoomInput" min="700" max="14000" step="100" value="2052" />
         <span class="camera-bar-value" id="zoomValue">2052</span>
+        <button class="setup-toggle" id="namesToggle" title="Replace summoner names with placeholders, for screenshots and recording">Hide names</button>
         <span class="control-sep"></span>
         <button class="cinematic-btn" id="cinematicBtn">Cinematic</button>
         <button class="setup-toggle" id="setupToggle">Setup</button>
@@ -1275,6 +1276,7 @@
   const sceneEl = document.getElementById('scene');
   const cinematicBtnEl = document.getElementById('cinematicBtn');
   const setupToggleEl = document.getElementById('setupToggle');
+  const namesToggleEl = document.getElementById('namesToggle');
   const setupPanelEl = document.getElementById('setupPanel');
   const toggleGridEl = document.getElementById('toggleGrid');
   const blueListEl = document.getElementById('blueList');
@@ -1534,7 +1536,7 @@
     }
   }
 
-  function buildRosterItem(player) {
+  function buildRosterItem(player, number) {
     const item = document.createElement('div');
     item.className = 'roster-item';
     item.dataset.name = player.riotIdGameName;
@@ -1573,7 +1575,7 @@
 
     const nameEl = document.createElement('div');
     nameEl.className = 'roster-name';
-    nameEl.textContent = player.riotIdGameName;
+    nameEl.textContent = rosterDisplayName(player, number);
     info.appendChild(nameEl);
 
     const statsEl = document.createElement('div');
@@ -1586,9 +1588,9 @@
     return item;
   }
 
-  function renderTeamBlock(container, players) {
+  function renderTeamBlock(container, players, offset) {
     container.replaceChildren();
-    for (const player of players) container.appendChild(buildRosterItem(player));
+    players.forEach((player, i) => container.appendChild(buildRosterItem(player, offset + i + 1)));
   }
 
   // Which card shows as active, and in which of the two states. Driven by what
@@ -1673,7 +1675,40 @@
     return player ? player.team : null;
   }
 
+  // Display-only. The roster data is left alone on purpose: playerByName is what
+  // resolves event summoner names to champion names, so anonymising it would
+  // make the events rail fall back to printing the real names instead.
+  let hideNames = false;
+  try {
+    hideNames = localStorage.getItem('hideNames') === '1';
+  } catch (err) {
+    // Storage unavailable; the toggle still works for this session.
+  }
+
+  let lastPlayers = [];
+
+  function rosterDisplayName(player, number) {
+    return hideNames ? `Player ${number}` : player.riotIdGameName;
+  }
+
+  function renderNamesToggle() {
+    namesToggleEl.textContent = hideNames ? 'Show names' : 'Hide names';
+    namesToggleEl.classList.toggle('open', hideNames);
+  }
+
+  namesToggleEl.addEventListener('click', () => {
+    hideNames = !hideNames;
+    try {
+      localStorage.setItem('hideNames', hideNames ? '1' : '0');
+    } catch (err) {
+      // Preference just won't survive a reload.
+    }
+    renderNamesToggle();
+    renderRoster(lastPlayers);
+  });
+
   function renderRoster(players) {
+    lastPlayers = players;
     playerByName = new Map(
       players
         .filter((p) => p.riotIdGameName)
@@ -1681,8 +1716,8 @@
     );
     const blue = players.filter((p) => p.team === 'ORDER');
     const red = players.filter((p) => p.team === 'CHAOS');
-    renderTeamBlock(blueListEl, blue);
-    renderTeamBlock(redListEl, red);
+    renderTeamBlock(blueListEl, blue, 0);
+    renderTeamBlock(redListEl, red, blue.length);
     renderRosterState();
 
     // Markers and event labels can both be built before the first roster
@@ -3211,6 +3246,7 @@
   connect();
   renderTransport();
   renderZoom();
+  renderNamesToggle();
   showRailTab('events');
 </script>
 </body>
