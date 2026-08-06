@@ -373,12 +373,25 @@
   }
 
   /* Transport */
+  /* One card with hairline-separated sections rather than three stacked cards.
+     The controls, the bar they drive and the cue row are one instrument; three
+     separate borders made them read as three unrelated panels. */
   .transport {
     display: flex;
     flex-direction: column;
-    gap: 12px;
     opacity: 1;
     transition: opacity 0.15s ease;
+  }
+  .transport.card {
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .transport > * {
+    padding: 13px 16px;
+  }
+  .transport > * + * {
+    border-top: 1px solid var(--border);
   }
   .transport.disabled {
     opacity: 0.4;
@@ -1160,8 +1173,8 @@
         <div class="roster-list" id="redList"></div>
       </div>
     </div>
-    <div class="transport disabled" id="transport">
-      <div class="transport-controls card">
+    <div class="transport disabled card" id="transport">
+      <div class="transport-controls">
         <span class="cmd-group" id="transportCmds"></span>
         <button class="pause-btn" id="pauseBtn">Pause</button>
         <div class="speed-presets" id="speedPresets">
@@ -1174,7 +1187,7 @@
         <span class="cmd-group" id="eventCmds"></span>
       </div>
 
-      <div class="timeline-row card">
+      <div class="timeline-row">
         <div class="scrub-area" id="scrubArea">
           <div class="scrub-track" id="scrubTrack">
             <div class="scrub-fill" id="scrubFill"></div>
@@ -1219,7 +1232,7 @@
         </div>
       </div>
 
-      <div class="cue-controls card">
+      <div class="cue-controls">
         <span class="cue-controls-label">Cues</span>
         <span class="cmd-group" id="cueCmds"></span>
         <span class="control-sep"></span>
