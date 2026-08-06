@@ -65,6 +65,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    margin-left: auto;
     transition: opacity 0.15s ease;
   }
   .scene-controls.disabled {
@@ -346,7 +347,6 @@
   .chips {
     display: flex;
     gap: 8px;
-    margin-left: auto;
   }
   .chip {
     font-size: 12px;
@@ -1119,16 +1119,16 @@
     <div class="statusbar card">
       <div class="dot helper-down" id="statusDot"></div>
       <div class="status-text" id="statusText">Connecting to helper…</div>
-      <span class="scene-controls disabled" id="scene">
-        <button class="cinematic-btn" id="cinematicBtn">Cinematic</button>
-        <button class="setup-toggle" id="setupToggle">Setup</button>
-      </span>
       <div class="chips">
         <span class="chip mode" id="gameMode">-</span>
         <span class="chip" id="speedChip">1×</span>
         <span class="chip" id="paused">-</span>
         <span class="chip loop" id="loopChip"></span>
       </div>
+      <span class="scene-controls disabled" id="scene">
+        <button class="cinematic-btn" id="cinematicBtn">Cinematic</button>
+        <button class="setup-toggle" id="setupToggle">Setup</button>
+      </span>
     </div>
 
     <!-- Opened from Setup in the status bar. Everything configured once and then
