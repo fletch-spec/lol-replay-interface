@@ -16,7 +16,10 @@ Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
 
 ## Now
 
-- Brief 005 complete; 006 and 007 are queued. Briefs are started
+- Briefs 001–006 complete. **007 (clickable controls + layout review) is the
+  only one left**, and it now has more to lay out than when it was written:
+  camera distance, HUD toggles, FOV and camera presets all landed after it.
+  Briefs are started
   **manually, one at a time** — nothing auto-advances. See
   [briefs/brief_log.md](./briefs/brief_log.md).
 - Timeline fidelity pass (phases 1–2 of
@@ -36,7 +39,7 @@ Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
 | 003 | Player lock + keystroke bridge | complete (partial) | 001 |
 | 004 | Event timeline | complete | 002 |
 | 005 | Cue points + A/B loop | complete | 002, 004 |
-| 006 | HUD toggles + camera presets | ready | 001 |
+| 006 | HUD toggles + camera presets | complete | 001 |
 | 007 | Clickable controls + layout review | ready | 004, 005 |
 
 Briefs 002 and 003 both only need 001, so either can go second. 006 is
@@ -76,7 +79,7 @@ No brief starts itself. Nothing in the queue runs without step 1.
 
 ## Stats
 
-- Briefs complete: 5 / 7
+- Briefs complete: 6 / 7
 - First working build: 2026-08-04
 - First recorded VO using the panel: TBD
 

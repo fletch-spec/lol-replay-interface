@@ -59,6 +59,119 @@
     opacity: 0.4;
     pointer-events: none;
   }
+  /* Scene controls (brief 006) */
+  .scene {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    transition: opacity 0.15s ease;
+  }
+  .scene.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .scene-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--dim);
+  }
+  .cinematic-btn {
+    flex: 0 0 auto;
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+  .cinematic-btn.active {
+    background: var(--warn);
+    color: #1a1206;
+    border-color: var(--warn);
+  }
+  .toggle-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex: 1;
+  }
+  .toggle-chip {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #0b0d10;
+    color: var(--dim);
+    cursor: pointer;
+  }
+  .toggle-chip.on {
+    color: var(--text);
+    border-color: #3d4756;
+    background: #171c23;
+  }
+  .toggle-chip.off {
+    color: #5d6675;
+    text-decoration: line-through;
+  }
+  .preset-sep {
+    width: 1px;
+    align-self: stretch;
+    background: var(--border);
+    margin: 0 2px;
+  }
+  .preset-name {
+    width: 130px;
+    background: #0b0d10;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 6px 8px;
+    color: var(--text);
+    font: inherit;
+    font-size: 11px;
+  }
+  .preset-name:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  #presetSave {
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 7px;
+  }
+  .preset-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex-basis: 100%;
+  }
+  .preset-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    padding: 4px 6px 4px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #0b0d10;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .preset-chip:hover { border-color: var(--accent); }
+  .preset-del {
+    padding: 0;
+    width: 15px;
+    height: 15px;
+    font-size: 11px;
+    line-height: 1;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--dim);
+  }
+  .preset-del:hover { color: var(--bad); }
+  .preset-empty { color: var(--dim); }
+
   .camera-bar {
     display: flex;
     align-items: center;
@@ -1048,6 +1161,22 @@
       </div>
     </div>
 
+    <div class="scene disabled" id="scene">
+      <div class="scene-row card">
+        <button class="cinematic-btn" id="cinematicBtn">Cinematic</button>
+        <div class="toggle-grid" id="toggleGrid"></div>
+      </div>
+      <div class="scene-row card">
+        <span class="camera-bar-label">FOV</span>
+        <input type="range" id="fovInput" min="20" max="90" step="1" value="45" />
+        <span class="camera-bar-value" id="fovValue">45</span>
+        <span class="preset-sep"></span>
+        <input class="preset-name" id="presetName" placeholder="preset name…" />
+        <button id="presetSave">Save camera</button>
+        <div class="preset-list" id="presetList"></div>
+      </div>
+    </div>
+
     <div class="roster disabled" id="roster">
       <div class="camera-bar">
         <span class="camera-bar-label">Camera distance</span>
@@ -1093,6 +1222,15 @@
   const rosterEl = document.getElementById('roster');
   const zoomInputEl = document.getElementById('zoomInput');
   const zoomValueEl = document.getElementById('zoomValue');
+
+  const sceneEl = document.getElementById('scene');
+  const cinematicBtnEl = document.getElementById('cinematicBtn');
+  const toggleGridEl = document.getElementById('toggleGrid');
+  const fovInputEl = document.getElementById('fovInput');
+  const fovValueEl = document.getElementById('fovValue');
+  const presetNameEl = document.getElementById('presetName');
+  const presetSaveEl = document.getElementById('presetSave');
+  const presetListEl = document.getElementById('presetList');
   const blueListEl = document.getElementById('blueList');
   const redListEl = document.getElementById('redList');
   const BLUE_KEYS = ['1', '2', '3', '4', '5'];
@@ -1156,6 +1294,7 @@
     statusText.textContent = label;
     transportEl.classList.toggle('disabled', state !== 'connected');
     rosterEl.classList.toggle('disabled', state !== 'connected');
+    sceneEl.classList.toggle('disabled', state !== 'connected');
   }
 
   function getDisplayTime() {
@@ -1510,6 +1649,9 @@
       const data = await res.json();
       gameModeEl.textContent = data.gameMode || '—';
       gameModeKnown = true;
+      // Camera presets are world coordinates, so they key by map, not game mode.
+      mapKey = data.mapName || data.gameMode || null;
+      renderPresets();
       syncCuesToIdentity(); // identity is only complete once gameMode lands
     } catch (err) {
       // replay may not be loaded yet — retry loop below will try again
@@ -1519,6 +1661,238 @@
   setInterval(() => {
     if (!gameModeKnown && currentState === 'connected') fetchGameMode();
   }, 3000);
+
+  // --- HUD toggles + camera presets (brief 006) ---
+
+  // Partial POSTs verified live: sending {interfaceMinimap:false} alone changed
+  // exactly 1 of 66 fields. No read-modify-write needed anywhere here.
+  const HUD_TOGGLES = [
+    { field: 'interfaceMinimap', label: 'Minimap' },
+    { field: 'interfaceScoreboard', label: 'Scoreboard' },
+    { field: 'interfaceScore', label: 'Score' },
+    { field: 'interfaceFrames', label: 'Frames' },
+    { field: 'interfaceChat', label: 'Chat' },
+    { field: 'interfaceTimeline', label: 'Timeline' },
+    { field: 'interfaceKillCallouts', label: 'Callouts' },
+    { field: 'interfaceNeutralTimers', label: 'Timers' },
+    { field: 'interfaceTarget', label: 'Target frame' },
+    { field: 'healthBarChampions', label: 'HP champs' },
+    { field: 'healthBarMinions', label: 'HP minions' },
+    { field: 'healthBarStructures', label: 'HP towers' },
+    { field: 'healthBarWards', label: 'HP wards' },
+    { field: 'particles', label: 'Particles' },
+    { field: 'floatingText', label: 'Floating text' },
+    { field: 'fogOfWar', label: 'Fog of war' },
+    { field: 'outlineSelect', label: 'Outlines' },
+  ];
+
+  // Composed from individual fields rather than `interfaceAll:false`, which the
+  // brief warns also hides the in-game replay control bar. `interfaceReplay` is
+  // deliberately absent from this list so that reference stays on screen.
+  const CINEMATIC_HIDE = [
+    'interfaceAnnounce', 'interfaceChat', 'interfaceFrames', 'interfaceKillCallouts',
+    'interfaceMinimap', 'interfaceNeutralTimers', 'interfaceScore', 'interfaceScoreboard',
+    'interfaceTarget', 'interfaceTimeline',
+    'healthBarChampions', 'healthBarMinions', 'healthBarPets', 'healthBarStructures',
+    'healthBarWards', 'floatingText',
+  ];
+
+  let renderState = null;
+  let mapKey = null;
+  let cinematicOn = false;
+
+  async function postRender(body) {
+    try {
+      const res = await fetch('/api/replay/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      // The API answers 200 for unknown field names and silently ignores them,
+      // so a status code proves nothing here. Callers verify by read-back via
+      // the 1Hz render broadcast.
+      return res.ok;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function renderToggles() {
+    toggleGridEl.replaceChildren();
+    if (!renderState) return;
+    for (const { field, label } of HUD_TOGGLES) {
+      const value = renderState[field];
+      if (value === undefined || value === null) continue; // e.g. interfaceQuests reports empty
+      const chip = document.createElement('button');
+      chip.className = `toggle-chip ${value ? 'on' : 'off'}`;
+      chip.textContent = label;
+      chip.addEventListener('click', () => postRender({ [field]: !value }));
+      toggleGridEl.appendChild(chip);
+    }
+  }
+
+  // Stores the *previous* values and restores those exactly — not defaults.
+  // Persisted so a browser reload mid-cinematic can still put the HUD back.
+  function readSavedHud() {
+    try {
+      const raw = localStorage.getItem('cinematicRestore');
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async function toggleCinematic() {
+    if (!renderState) return;
+    if (!cinematicOn) {
+      const saved = {};
+      for (const field of CINEMATIC_HIDE) {
+        if (renderState[field] !== undefined && renderState[field] !== null) {
+          saved[field] = renderState[field];
+        }
+      }
+      try {
+        localStorage.setItem('cinematicRestore', JSON.stringify(saved));
+      } catch (err) {
+        // In-memory restore still works for this session.
+      }
+      const off = {};
+      for (const field of Object.keys(saved)) off[field] = false;
+      await postRender(off);
+      cinematicOn = true;
+    } else {
+      const saved = readSavedHud();
+      if (saved) await postRender(saved);
+      cinematicOn = false;
+    }
+    cinematicBtnEl.classList.toggle('active', cinematicOn);
+    cinematicBtnEl.textContent = cinematicOn ? 'Restore HUD' : 'Cinematic';
+  }
+
+  cinematicBtnEl.addEventListener('click', toggleCinematic);
+
+  let fovTimer = null;
+  fovInputEl.addEventListener('input', () => {
+    fovValueEl.textContent = fovInputEl.value;
+    if (fovTimer) return;
+    fovTimer = setTimeout(() => {
+      fovTimer = null;
+      postRender({ fieldOfView: Number(fovInputEl.value) });
+    }, 60);
+  });
+
+  // --- Camera presets ---
+
+  // Keyed by map: world coordinates mean nothing across maps, so Summoner's Rift
+  // presets would send the camera into the void on ARAM.
+  function presetsKey() {
+    return `campresets:${mapKey || 'unknown'}`;
+  }
+
+  function loadPresets() {
+    try {
+      const raw = localStorage.getItem(presetsKey());
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function savePresets(list) {
+    try {
+      localStorage.setItem(presetsKey(), JSON.stringify(list));
+    } catch (err) {
+      // Presets stay for this session only.
+    }
+  }
+
+  function renderPresets() {
+    presetListEl.replaceChildren();
+    const list = loadPresets();
+    if (!list.length) {
+      const empty = document.createElement('span');
+      empty.className = 'preset-empty';
+      empty.textContent = mapKey
+        ? `No camera presets saved for ${mapKey}.`
+        : 'Waiting for map…';
+      presetListEl.appendChild(empty);
+      return;
+    }
+    list.forEach((preset, index) => {
+      const chip = document.createElement('span');
+      chip.className = 'preset-chip';
+
+      const label = document.createElement('span');
+      label.textContent = preset.name;
+      label.addEventListener('click', () => applyPreset(preset));
+      chip.appendChild(label);
+
+      const del = document.createElement('button');
+      del.className = 'preset-del';
+      del.textContent = '×';
+      del.title = 'Delete preset';
+      del.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const next = loadPresets();
+        next.splice(index, 1);
+        savePresets(next);
+        renderPresets();
+      });
+      chip.appendChild(del);
+
+      presetListEl.appendChild(chip);
+    });
+  }
+
+  function saveCurrentPreset() {
+    if (!renderState || !mapKey) return;
+    const name = presetNameEl.value.trim() || `Preset ${loadPresets().length + 1}`;
+    const list = loadPresets();
+    list.push({
+      name,
+      position: renderState.cameraPosition,
+      rotation: renderState.cameraRotation,
+      fov: renderState.fieldOfView,
+    });
+    savePresets(list);
+    presetNameEl.value = '';
+    renderPresets();
+  }
+
+  // Detaches from any followed champion — a preset is a fixed vantage point.
+  // `fps` is required: in `top` mode the camera is on the game's rails and a
+  // written cameraPosition does nothing. Never `tps`, which closes the game.
+  function applyPreset(preset) {
+    postRender({
+      cameraMode: 'fps',
+      cameraAttached: false,
+      selectionName: '',
+      cameraPosition: preset.position,
+      cameraRotation: preset.rotation,
+      fieldOfView: preset.fov,
+    });
+    lastAction = { name: null, kind: null };
+    renderRosterState();
+  }
+
+  presetSaveEl.addEventListener('click', saveCurrentPreset);
+  presetNameEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') saveCurrentPreset();
+    if (e.key === 'Escape') presetNameEl.blur();
+  });
+
+  let lastFovRendered = null;
+
+  function applyRenderState(render) {
+    renderState = render;
+    renderToggles();
+    if (document.activeElement !== fovInputEl && render.fieldOfView !== lastFovRendered) {
+      lastFovRendered = render.fieldOfView;
+      fovInputEl.value = String(Math.round(render.fieldOfView));
+      fovValueEl.textContent = String(Math.round(render.fieldOfView));
+    }
+  }
 
   // --- Event timeline ---
 
@@ -2632,6 +3006,7 @@
       if (msg.type === 'roster') {
         checkGameChange(msg.processID);
         cameraState = msg.camera || { attached: false, selectionName: null };
+        if (msg.render) applyRenderState(msg.render);
         renderRoster(msg.players || []);
         return;
       }
@@ -2708,6 +3083,7 @@
   connect();
   renderTransport();
   renderZoom();
+  renderPresets();
 </script>
 </body>
 </html>

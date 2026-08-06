@@ -216,6 +216,9 @@ async function pollRoster() {
     broadcast({
       type: 'roster',
       players,
+      // Whole render object — the HUD toggles and camera presets need to
+      // reflect real client state, and it's already being fetched here.
+      render,
       camera: {
         attached: render.cameraAttached,
         selectionName: render.selectionName,

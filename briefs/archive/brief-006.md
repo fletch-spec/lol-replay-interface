@@ -1,8 +1,8 @@
 ---
 id: brief-006
-state: ready
+state: complete
 created: 2026-08-04
-updated: 2026-08-04
+updated: 2026-08-05
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: [brief-001]
@@ -125,3 +125,53 @@ scope. Note it as a future project if wanted.
 
 **Out of scope:** `/replay/recording` (the client's own capture). OBS is better
 and already set up. Do not build against it.
+
+## Outcome (2026-08-05)
+
+Shipped. Every Can't Skip item verified against a live replay.
+
+**Hardest Part was a non-issue, and the docs said so.** Partial POSTs work:
+sending `{"interfaceMinimap": false}` alone changed exactly **1 of 66 fields**,
+diffed field by field. The client documents this too — `PostReplayRender` reads
+"All values are optional." No read-modify-write anywhere.
+
+The real trap is the opposite one: **the API returns HTTP 200 for field names
+that don't exist and silently ignores them.** Confirmed by posting
+`cameraLookAtTarget` and a deliberate nonsense control — identical 200s, neither
+appearing in a subsequent GET. A status code proves nothing here, so every
+toggle reflects state read back from the 1Hz render broadcast rather than
+assuming the write landed.
+
+**`interfaceAll: false` was tested and rejected as the cinematic implementation.**
+It does not cascade — the individual `interface*` booleans keep their values, so
+it is cleanly reversible, and it also flips `interfaceAnnounce`. But per the
+brief's warning it takes the in-game replay control bar with it. Cinematic is
+composed from 16 individual fields instead, with `interfaceReplay` deliberately
+excluded so that reference stays on screen.
+
+**Cinematic restore is exact, not defaults.** Verified from a deliberately mixed
+starting state (minimap on, scoreboard off, wards off, chat on): all 16 fields
+went false, `interfaceReplay` stayed true, and restoring returned every field to
+its exact prior value including the ones already off. The snapshot persists to
+`localStorage`, so a browser reload mid-cinematic can still put the HUD back.
+
+**Camera presets** save position + rotation + FOV, named, keyed by `mapName`
+from `/liveclientdata/gamestats` (`Map11`), persisted to
+`campresets:<mapName>`. Verified: saved a vantage point, moved the camera well
+away, clicked the preset, and position/rotation/FOV all came back exactly.
+Applying a preset sends `cameraMode: "fps"` and `cameraAttached: false` —
+`fps` because in `top` mode the camera is on the game's rails and a written
+`cameraPosition` does nothing, and detaching because a preset is a fixed vantage
+point rather than a follow.
+
+**The camera premise in this brief was already obsolete when it started.**
+Follow-cam was solved outside the queue (see `KNOWN_ISSUES.md`), so presets are
+a secondary tool, as the brief's own "Interaction with brief 003" note
+anticipated for the case where the bridge worked. `cameraMode: "tps"` was never
+sent — it closes the game, reproduced twice.
+
+**Not done:** depth of field and fog. The brief says expose them but keep them
+off by default; they are the "screenshot vs cinematic" controls and none of the
+16 fields behind them are wired up. Deliberate — the toggle grid is already at
+17 chips and brief 007 is about to review this layout. `/replay/sequence` stayed
+out of scope as instructed.
