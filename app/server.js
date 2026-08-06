@@ -216,7 +216,13 @@ async function pollRoster() {
     broadcast({
       type: 'roster',
       players,
-      camera: { attached: render.cameraAttached, selectionName: render.selectionName },
+      camera: {
+        attached: render.cameraAttached,
+        selectionName: render.selectionName,
+        // The panel needs the mode to tell a real camera lock from a bare
+        // selection: attached/selectionName are both inert unless mode is fps.
+        mode: render.cameraMode,
+      },
       processID: game.processID,
     });
     broadcast({ type: 'events', events: eventdata.Events || [], processID: game.processID });

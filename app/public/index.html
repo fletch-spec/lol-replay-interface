@@ -96,18 +96,57 @@
     cursor: pointer;
     text-align: left;
   }
-  .roster-item:hover {
-    border-color: var(--accent);
-  }
-  .roster-item.locked {
+  /* Two controls in one card: the portrait locks the camera, the text selects
+     the target frame. They were one click before, which conflated the in-game
+     single-click (frame) and double-click (camera) behaviours. */
+  .roster-item.cam-locked {
     border-color: var(--ok);
     background: rgba(55, 214, 122, 0.12);
+  }
+  .roster-item.frame-selected {
+    border-color: var(--accent);
+    background: rgba(77, 141, 255, 0.1);
   }
   .roster-portrait-wrap {
     position: relative;
     width: 44px;
     height: 44px;
     flex-shrink: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .roster-portrait-wrap:hover {
+    outline: 2px solid var(--ok);
+    outline-offset: 2px;
+  }
+  .roster-cam-hint {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(6, 12, 18, 0.62);
+    color: var(--ok);
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    pointer-events: none;
+  }
+  .roster-portrait-wrap:hover .roster-cam-hint { opacity: 1; }
+  .roster-item.cam-locked .roster-portrait-wrap {
+    outline: 2px solid var(--ok);
+    outline-offset: 2px;
+  }
+  .roster-info {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+  }
+  .roster-info:hover {
+    background: rgba(77, 141, 255, 0.14);
   }
   .roster-key {
     position: absolute;
@@ -147,6 +186,7 @@
   .roster-info {
     min-width: 0;
     flex: 1;
+    /* interaction styling is defined with the portrait control above */
   }
   .roster-champ {
     font-size: 12px;
@@ -1220,8 +1260,32 @@
           cameraRotation: FOLLOW_ROTATION,
         }),
       });
+      lastAction = { name: riotIdGameName, kind: 'camera' };
+      renderRosterState();
     } catch (err) {
       // Next roster poll tick reconciles the lock indicator regardless.
+    } finally {
+      lockInFlight = false;
+    }
+  }
+
+  // Selection only — brings up the target frame in game without touching the
+  // camera. This is the single-click equivalent of the in-game hotkeys; the
+  // camera lock is the double-click equivalent, and they are deliberately
+  // separate controls here because they were conflated before.
+  async function selectTarget(riotIdGameName) {
+    if (lockInFlight) return;
+    lockInFlight = true;
+    try {
+      await fetch('/api/replay/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selectionName: riotIdGameName }),
+      });
+      lastAction = { name: riotIdGameName, kind: 'frame' };
+      renderRosterState();
+    } catch (err) {
+      // Poll tick reconciles.
     } finally {
       lockInFlight = false;
     }
@@ -1230,15 +1294,17 @@
   function buildRosterItem(player, key) {
     const item = document.createElement('div');
     item.className = 'roster-item';
-
-    const isLocked =
-      cameraState.attached &&
-      cameraState.selectionName &&
-      cameraState.selectionName.toLowerCase() === player.riotIdGameName.toLowerCase();
-    item.classList.toggle('locked', isLocked);
+    item.dataset.name = player.riotIdGameName;
 
     const portraitWrap = document.createElement('div');
     portraitWrap.className = 'roster-portrait-wrap';
+    portraitWrap.title = 'Lock camera to this champion';
+    portraitWrap.addEventListener('click', () => lockCamera(player.riotIdGameName));
+
+    const camHint = document.createElement('div');
+    camHint.className = 'roster-cam-hint';
+    camHint.textContent = '◉';
+    portraitWrap.appendChild(camHint);
 
     const keyEl = document.createElement('div');
     keyEl.className = 'roster-key';
@@ -1259,6 +1325,8 @@
 
     const info = document.createElement('div');
     info.className = 'roster-info';
+    info.title = 'Show target frame in game (no camera change)';
+    info.addEventListener('click', () => selectTarget(player.riotIdGameName));
 
     const champEl = document.createElement('div');
     champEl.className = 'roster-champ';
@@ -1277,14 +1345,27 @@
     info.appendChild(statsEl);
 
     item.appendChild(info);
-
-    item.addEventListener('click', () => lockCamera(player.riotIdGameName));
     return item;
   }
 
   function renderTeamBlock(container, players, keys) {
     container.replaceChildren();
     players.forEach((p, i) => container.appendChild(buildRosterItem(p, keys[i])));
+  }
+
+  // Which card shows as active, and in which of the two states. Driven by what
+  // was last clicked here rather than by polled state: `selectionName` clears
+  // itself spontaneously, so a polled indicator drops out on its own while the
+  // camera is still very much locked.
+  let lastAction = { name: null, kind: null };
+
+  function renderRosterState() {
+    for (const item of document.querySelectorAll('.roster-item')) {
+      const isTarget =
+        lastAction.name && item.dataset.name.toLowerCase() === lastAction.name.toLowerCase();
+      item.classList.toggle('cam-locked', !!isTarget && lastAction.kind === 'camera');
+      item.classList.toggle('frame-selected', !!isTarget && lastAction.kind === 'frame');
+    }
   }
 
   // Events carry summoner names only, so the timeline leans on the roster to
@@ -1312,6 +1393,7 @@
     const red = players.filter((p) => p.team === 'CHAOS');
     renderTeamBlock(blueListEl, blue, BLUE_KEYS);
     renderTeamBlock(redListEl, red, RED_KEYS);
+    renderRosterState();
 
     // Markers can be built before the first roster arrives, in which case they
     // have no team caps yet. Redraw once the names are actually resolvable.
@@ -1320,6 +1402,7 @@
 
   function clearRosterDisplay() {
     playerByName = new Map();
+    lastAction = { name: null, kind: null };
     blueListEl.replaceChildren();
     redListEl.replaceChildren();
   }
