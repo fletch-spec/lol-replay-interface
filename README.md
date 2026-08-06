@@ -10,12 +10,29 @@ it's out.
 
 ## Quick start
 
-1. Enable the replay API: `EnableReplayApi=1` under `[General]` in the client's
-   `Config/game.cfg`. **Nothing works before this.**
-2. Double-click `run.bat`.
+### 1. Enable the replay API - required, nothing works without it
 
-It installs dependencies on first run, starts the helper and opens
-<http://localhost:3000>. Needs Node 18+ and Windows.
+The League client does not expose its replay API by default. Until you turn it
+on there is no API to connect to, and the panel cannot tell you that - it just
+sits on "no replay loaded" with a replay open in front of you.
+
+Add this to `C:\Riot Games\League of Legends\Config\game.cfg`:
+
+```ini
+[General]
+EnableReplayApi=1
+```
+
+Then **fully restart the League client** - the flag is only read at startup.
+
+To confirm it took, open <https://127.0.0.1:2999/swagger/v3/openapi.json> in a
+browser with a replay running and accept the certificate warning. JSON back
+means the API is on.
+
+### 2. Run it
+
+Double-click `run.bat`. It installs dependencies on first run, starts the helper
+and opens <http://localhost:3000>. Needs Node 18+ and Windows.
 
 Manual equivalent:
 
