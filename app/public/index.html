@@ -1320,7 +1320,6 @@
   const RED_KEYS = ['Q', 'W', 'E', 'R', 'T'];
 
   const scrubMarkersEl = document.getElementById('scrubMarkers');
-  let railTab = 'events';
   const eventsToggleEl = document.getElementById('eventsToggle');
   const eventsListEl = document.getElementById('eventsList');
 
@@ -2388,7 +2387,6 @@
   }
 
   function showRailTab(tab) {
-    railTab = tab;
     eventsToggleEl.classList.toggle('active', tab === 'events');
     cuesToggleEl.classList.toggle('active', tab === 'cues');
     eventsListEl.hidden = tab !== 'events';
