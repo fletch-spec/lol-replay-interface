@@ -149,6 +149,16 @@ brief's warning it takes the in-game replay control bar with it. Cinematic is
 composed from 16 individual fields instead, with `interfaceReplay` deliberately
 excluded so that reference stays on screen.
 
+**Amended 2026-08-06, post-brief, at the user's request:** restore now forces a
+minimum set back on regardless of what was saved — minimap, frames, target
+frame, all five health bars, and fog of war. Exact restore alone could hand back
+a state you can't work in: if those were already off when you hit Cinematic,
+turning it off left you without a minimap or health bars and looked like the
+restore had failed. Everything outside that floor still restores exactly. The
+FOV slider this brief shipped was also removed — camera distance is the zoom
+that matters and two interacting "zoom" controls was worse than one; FOV is
+still carried through camera writes so locking a champion doesn't reset it.
+
 **Cinematic restore is exact, not defaults.** Verified from a deliberately mixed
 starting state (minimap on, scoreboard off, wards off, chat on): all 16 fields
 went false, `interfaceReplay` stayed true, and restoring returned every field to

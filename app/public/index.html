@@ -1253,10 +1253,6 @@
         <div class="toggle-grid" id="toggleGrid"></div>
       </div>
       <div class="scene-row card">
-        <span class="camera-bar-label">FOV</span>
-        <input type="range" id="fovInput" min="20" max="90" step="1" value="45" />
-        <span class="camera-bar-value" id="fovValue">45</span>
-        <span class="preset-sep"></span>
         <input class="preset-name" id="presetName" placeholder="preset name…" />
         <button id="presetSave">Save camera</button>
         <div class="preset-list" id="presetList"></div>
@@ -1266,7 +1262,10 @@
     <div class="roster disabled" id="roster">
       <div class="camera-bar">
         <span class="camera-bar-label">Camera distance</span>
-        <input type="range" id="zoomInput" min="900" max="5200" step="50" value="2052" />
+        <!-- Top-down spectator sits ~1900 units out; the upper end here is
+             deliberately well past that so you can pull back wider than the
+             normal view. -->
+        <input type="range" id="zoomInput" min="700" max="14000" step="100" value="2052" />
         <span class="camera-bar-value" id="zoomValue">2052</span>
         <span class="camera-bar-hint">portrait = camera · name = target frame</span>
       </div>
@@ -1312,8 +1311,6 @@
   const sceneEl = document.getElementById('scene');
   const cinematicBtnEl = document.getElementById('cinematicBtn');
   const toggleGridEl = document.getElementById('toggleGrid');
-  const fovInputEl = document.getElementById('fovInput');
-  const fovValueEl = document.getElementById('fovValue');
   const presetNameEl = document.getElementById('presetName');
   const presetSaveEl = document.getElementById('presetSave');
   const presetListEl = document.getElementById('presetList');
@@ -1511,11 +1508,11 @@
   }
 
   // Switching cameraMode resets fieldOfView, so every camera write carries the
-  // FOV forward explicitly — otherwise locking onto a champion silently throws
-  // away whatever the FOV slider was set to.
+  // client's current value forward explicitly — otherwise locking onto a
+  // champion would silently snap the FOV back to a default. There is no FOV
+  // control in the panel: distance is the one zoom that matters here, and two
+  // separate "zoom" sliders that interact was worse than one that works.
   function currentFov() {
-    const fromSlider = Number(fovInputEl.value);
-    if (isFinite(fromSlider) && fromSlider > 0) return fromSlider;
     return renderState && renderState.fieldOfView ? renderState.fieldOfView : 45;
   }
 
@@ -1542,6 +1539,11 @@
         }),
       });
       lastAction = { name: riotIdGameName, kind: 'camera' };
+      try {
+        localStorage.setItem('lastFollow', riotIdGameName);
+      } catch (err) {
+        // Adoption after a reload just won't work; the lock itself is fine.
+      }
       renderRosterState();
     } catch (err) {
       // Next roster poll tick reconciles the lock indicator regardless.
@@ -1728,9 +1730,13 @@
     renderTeamBlock(redListEl, red, RED_KEYS);
     renderRosterState();
 
-    // Markers can be built before the first roster arrives, in which case they
-    // have no team caps yet. Redraw once the names are actually resolvable.
-    if (markersRenderedWithoutTeams && playerByName.size > 0) renderMarkers();
+    // Markers and event labels can both be built before the first roster
+    // arrives — no team caps, and summoner names where champion names belong.
+    // Redraw once the names are actually resolvable.
+    if (markersRenderedWithoutTeams && playerByName.size > 0) {
+      renderMarkers();
+      renderEventList();
+    }
   }
 
   function clearRosterDisplay() {
@@ -1793,6 +1799,16 @@
     'interfaceTarget', 'interfaceTimeline',
     'healthBarChampions', 'healthBarMinions', 'healthBarPets', 'healthBarStructures',
     'healthBarWards', 'floatingText',
+  ];
+
+  // Restoring the HUD forces these back on regardless of what was saved. Exact
+  // restore alone can hand back a state you can't actually work in — if any of
+  // these were already off when you hit Cinematic, turning it off would leave
+  // you without a minimap or health bars and looking like it hadn't restored.
+  const CINEMATIC_RESTORE_MIN = [
+    'interfaceMinimap', 'interfaceFrames', 'interfaceTarget',
+    'healthBarChampions', 'healthBarMinions', 'healthBarPets',
+    'healthBarStructures', 'healthBarWards', 'fogOfWar',
   ];
 
   let renderState = null;
@@ -1859,8 +1875,9 @@
       await postRender(off);
       cinematicOn = true;
     } else {
-      const saved = readSavedHud();
-      if (saved) await postRender(saved);
+      const restore = { ...(readSavedHud() || {}) };
+      for (const field of CINEMATIC_RESTORE_MIN) restore[field] = true;
+      await postRender(restore);
       cinematicOn = false;
     }
     cinematicBtnEl.classList.toggle('active', cinematicOn);
@@ -1868,16 +1885,6 @@
   }
 
   cinematicBtnEl.addEventListener('click', toggleCinematic);
-
-  let fovTimer = null;
-  fovInputEl.addEventListener('input', () => {
-    fovValueEl.textContent = fovInputEl.value;
-    if (fovTimer) return;
-    fovTimer = setTimeout(() => {
-      fovTimer = null;
-      postRender({ fieldOfView: Number(fovInputEl.value) });
-    }, 60);
-  });
 
   // --- Camera presets ---
 
@@ -1980,16 +1987,32 @@
     if (e.key === 'Escape') presetNameEl.blur();
   });
 
-  let lastFovRendered = null;
-
   function applyRenderState(render) {
     renderState = render;
-    renderToggles();
-    if (document.activeElement !== fovInputEl && render.fieldOfView !== lastFovRendered) {
-      lastFovRendered = render.fieldOfView;
-      fovInputEl.value = String(Math.round(render.fieldOfView));
-      fovValueEl.textContent = String(Math.round(render.fieldOfView));
+
+    // The client keeps following across a panel reload, but `lastAction` is
+    // panel-local and starts empty — so the distance slider did nothing until
+    // you re-clicked a portrait. Adopt a follow that's already running.
+    //
+    // The target name can't come from `selectionName`: it clears itself while
+    // the follow carries on, so by the time this runs it's usually empty. The
+    // last locked name is persisted at lock time and used as the fallback.
+    if (!lastAction.name && render.cameraAttached && render.cameraMode === 'fps') {
+      let name = render.selectionName;
+      if (!name) {
+        try {
+          name = localStorage.getItem('lastFollow') || '';
+        } catch (err) {
+          name = '';
+        }
+      }
+      if (name) {
+        lastAction = { name, kind: 'camera' };
+        renderRosterState();
+      }
     }
+
+    renderToggles();
   }
 
   // --- Event timeline ---
@@ -2031,6 +2054,15 @@
     return team === 'ORDER' ? 'blue' : 'red';
   }
 
+  // Events carry summoner names, which are unreadable at a glance mid-narration
+  // — "Rengar killed Lux" lands far faster than "Havokfrog killed FrontflipBaron".
+  // Falls back to the raw name when it doesn't resolve to a champion, which is
+  // what happens for turret and minion killers.
+  function championName(name) {
+    const player = playerFor(name);
+    return player && player.champion ? player.champion : name || '';
+  }
+
   // Structure IDs look like `Turret_TChaos_L2_P3_2521511112_0`. Only the team
   // segment is safe to read — the L/P numbers have no documented lane mapping,
   // so guessing "bot outer" from them would print confident nonsense. The raw
@@ -2045,25 +2077,25 @@
   function describeEvent(event) {
     switch (event.EventName) {
       case 'ChampionKill':
-        return `${event.KillerName} killed ${event.VictimName}`;
+        return `${championName(event.KillerName)} killed ${championName(event.VictimName)}`;
       case 'Multikill':
-        return `${event.KillerName} multikill (${event.KillStreak}x)`;
+        return `${championName(event.KillerName)} multikill (${event.KillStreak}x)`;
       case 'FirstBlood':
-        return `First Blood — ${event.Recipient}`;
+        return `First Blood — ${championName(event.Recipient)}`;
       case 'Ace':
-        return `Ace — ${event.Acer || ''}${event.AcingTeam ? ` (${sideName(event.AcingTeam)} team)` : ''}`.trim();
+        return `Ace — ${championName(event.Acer)}${event.AcingTeam ? ` (${sideName(event.AcingTeam)} team)` : ''}`.trim();
       case 'DragonKill':
-        return `Dragon (${event.DragonType || '?'}) — ${event.KillerName}`;
+        return `Dragon (${event.DragonType || '?'}) — ${championName(event.KillerName)}`;
       case 'BaronKill':
-        return `Baron — ${event.KillerName}`;
+        return `Baron — ${championName(event.KillerName)}`;
       case 'HeraldKill':
-        return `Herald — ${event.KillerName}`;
+        return `Herald — ${championName(event.KillerName)}`;
       case 'TurretKilled':
-        return `Turret${structureSide(event.TurretKilled)} — ${event.KillerName || '?'}`;
+        return `Turret${structureSide(event.TurretKilled)} — ${championName(event.KillerName) || '?'}`;
       case 'InhibKilled':
-        return `Inhibitor${structureSide(event.InhibKilled)} — ${event.KillerName || '?'}`;
+        return `Inhibitor${structureSide(event.InhibKilled)} — ${championName(event.KillerName) || '?'}`;
       case 'FirstBrick':
-        return `First Tower — ${event.KillerName || ''}`.trim();
+        return `First Tower — ${championName(event.KillerName)}`.trim();
       default:
         return event.EventName;
     }
