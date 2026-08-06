@@ -1667,16 +1667,11 @@
   // about the height the game's own top-down camera sits at.
   zoomResetBtnEl.addEventListener('click', () => setFollowDistance(FOLLOW_BASE_DISTANCE));
 
-  zoomInputEl.addEventListener('input', () => {
-    followDistance = Number(zoomInputEl.value);
-    zoomValueEl.textContent = String(Math.round(followDistance));
-    try {
-      localStorage.setItem('followDistance', String(followDistance));
-    } catch (err) {
-      // Not worth failing the drag over.
-    }
-    scheduleFramingUpdate();
-  });
+  // Routed through the same setter the Reset button uses. Dragging and resetting
+  // were separate copies of persist-then-reframe, which is the drift brief 007's
+  // command table exists to prevent - one of them would eventually gain a step
+  // the other didn't.
+  zoomInputEl.addEventListener('input', () => setFollowDistance(Number(zoomInputEl.value)));
 
   function renderRosterState() {
     for (const item of document.querySelectorAll('.roster-item')) {
