@@ -53,7 +53,7 @@ npm start
   YouTube chapters.
 - **A/B loop** - mark a section and loop it while you re-record a line
 - **Camera** - lock the camera to any champion and follow them, with a distance
-  slider, plus named camera presets saved per map
+  slider
 - **HUD** - one-press cinematic mode, or toggle any individual HUD element
 - Every action has both a button and a keyboard shortcut
 
@@ -67,7 +67,6 @@ Everything lives in the [wiki](../../wiki):
 | [Architecture](../../wiki/Architecture) | How the helper and panel fit together, what to know before editing |
 | [Replay API](../../wiki/Replay-API) | Hard-won facts about the client's API |
 | [Brief Process](../../wiki/Brief-Process) | How this was built, and what each brief got wrong |
-| [UI Polish Plan](../../wiki/UI-Polish-Plan) | Timeline fidelity pass |
 
 Open problems are in [Issues](../../issues). The specs this was built from are in
 [`briefs/`](briefs/), each with an Outcome section recording what actually

@@ -89,6 +89,31 @@
     color: #1a1206;
     border-color: var(--warn);
   }
+  /* The HUD toggles are configuration, not live control - you set your HUD once
+     and then leave it alone. Cinematic is the button you actually press during
+     a take, so it stays out here and the 17 chips live behind Setup. */
+  .setup-toggle {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 7px;
+  }
+  .setup-toggle.open {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .scene-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .scene-setup[hidden] { display: none; }
+  .setup-group {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+  }
   .toggle-grid {
     display: flex;
     flex-wrap: wrap;
@@ -114,63 +139,12 @@
     color: #5d6675;
     text-decoration: line-through;
   }
-  .preset-sep {
+  .control-sep {
     width: 1px;
     align-self: stretch;
     background: var(--border);
     margin: 0 2px;
   }
-  .preset-name {
-    width: 130px;
-    background: #0b0d10;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 6px 8px;
-    color: var(--text);
-    font: inherit;
-    font-size: 11px;
-  }
-  .preset-name:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
-  #presetSave {
-    font-size: 11px;
-    padding: 6px 10px;
-    border-radius: 7px;
-  }
-  .preset-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    flex-basis: 100%;
-  }
-  .preset-chip {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    padding: 4px 6px 4px 9px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: #0b0d10;
-    color: var(--text);
-    cursor: pointer;
-  }
-  .preset-chip:hover { border-color: var(--accent); }
-  .preset-del {
-    padding: 0;
-    width: 15px;
-    height: 15px;
-    font-size: 11px;
-    line-height: 1;
-    border-radius: 4px;
-    border: none;
-    background: transparent;
-    color: var(--dim);
-  }
-  .preset-del:hover { color: var(--bad); }
-  .preset-empty { color: var(--dim); }
 
   .camera-bar {
     display: flex;
@@ -1240,22 +1214,25 @@
       <div class="cue-controls card">
         <span class="cue-controls-label">Cues</span>
         <span class="cmd-group" id="cueCmds"></span>
-        <span class="preset-sep"></span>
+        <span class="control-sep"></span>
         <span class="cue-controls-label">Loop</span>
         <span class="cmd-group" id="loopCmds"></span>
         <span class="hint">shift+←/→ = ±1s · alt-drag = no snap · shift+click an event marker = cue</span>
       </div>
     </div>
 
+    <!-- Live row: things touched during a take. Everything you configure once
+         and then leave alone lives behind Setup. -->
     <div class="scene disabled" id="scene">
       <div class="scene-row card">
         <button class="cinematic-btn" id="cinematicBtn">Cinematic</button>
-        <div class="toggle-grid" id="toggleGrid"></div>
+        <button class="setup-toggle" id="setupToggle">Setup</button>
       </div>
-      <div class="scene-row card">
-        <input class="preset-name" id="presetName" placeholder="preset name…" />
-        <button id="presetSave">Save camera</button>
-        <div class="preset-list" id="presetList"></div>
+      <div class="scene-setup card" id="setupPanel" hidden>
+        <div class="setup-group">
+          <span class="cue-controls-label">HUD</span>
+          <div class="toggle-grid" id="toggleGrid"></div>
+        </div>
       </div>
     </div>
 
@@ -1310,10 +1287,9 @@
 
   const sceneEl = document.getElementById('scene');
   const cinematicBtnEl = document.getElementById('cinematicBtn');
+  const setupToggleEl = document.getElementById('setupToggle');
+  const setupPanelEl = document.getElementById('setupPanel');
   const toggleGridEl = document.getElementById('toggleGrid');
-  const presetNameEl = document.getElementById('presetName');
-  const presetSaveEl = document.getElementById('presetSave');
-  const presetListEl = document.getElementById('presetList');
   const blueListEl = document.getElementById('blueList');
   const redListEl = document.getElementById('redList');
   const BLUE_KEYS = ['1', '2', '3', '4', '5'];
@@ -1752,9 +1728,6 @@
       const data = await res.json();
       gameModeEl.textContent = data.gameMode || '-';
       gameModeKnown = true;
-      // Camera presets are world coordinates, so they key by map, not game mode.
-      mapKey = data.mapName || data.gameMode || null;
-      renderPresets();
       syncCuesToIdentity(); // identity is only complete once gameMode lands
     } catch (err) {
       // replay may not be loaded yet - retry loop below will try again
@@ -1765,7 +1738,7 @@
     if (!gameModeKnown && currentState === 'connected') fetchGameMode();
   }, 3000);
 
-  // --- HUD toggles + camera presets (brief 006) ---
+  // --- HUD toggles (brief 006; camera presets removed as out of scope) ---
 
   // Partial POSTs verified live: sending {interfaceMinimap:false} alone changed
   // exactly 1 of 66 fields. No read-modify-write needed anywhere here.
@@ -1811,7 +1784,6 @@
   ];
 
   let renderState = null;
-  let mapKey = null;
   let cinematicOn = false;
 
   async function postRender(body) {
@@ -1885,105 +1857,10 @@
 
   cinematicBtnEl.addEventListener('click', toggleCinematic);
 
-  // --- Camera presets ---
-
-  // Keyed by map: world coordinates mean nothing across maps, so Summoner's Rift
-  // presets would send the camera into the void on ARAM.
-  function presetsKey() {
-    return `campresets:${mapKey || 'unknown'}`;
-  }
-
-  function loadPresets() {
-    try {
-      const raw = localStorage.getItem(presetsKey());
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (err) {
-      return [];
-    }
-  }
-
-  function savePresets(list) {
-    try {
-      localStorage.setItem(presetsKey(), JSON.stringify(list));
-    } catch (err) {
-      // Presets stay for this session only.
-    }
-  }
-
-  function renderPresets() {
-    presetListEl.replaceChildren();
-    const list = loadPresets();
-    if (!list.length) {
-      const empty = document.createElement('span');
-      empty.className = 'preset-empty';
-      empty.textContent = mapKey
-        ? `No camera presets saved for ${mapKey}.`
-        : 'Waiting for map…';
-      presetListEl.appendChild(empty);
-      return;
-    }
-    list.forEach((preset, index) => {
-      const chip = document.createElement('span');
-      chip.className = 'preset-chip';
-
-      const label = document.createElement('span');
-      label.textContent = preset.name;
-      label.addEventListener('click', () => applyPreset(preset));
-      chip.appendChild(label);
-
-      const del = document.createElement('button');
-      del.className = 'preset-del';
-      del.textContent = '×';
-      del.title = 'Delete preset';
-      del.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const next = loadPresets();
-        next.splice(index, 1);
-        savePresets(next);
-        renderPresets();
-      });
-      chip.appendChild(del);
-
-      presetListEl.appendChild(chip);
-    });
-  }
-
-  function saveCurrentPreset() {
-    if (!renderState || !mapKey) return;
-    const name = presetNameEl.value.trim() || `Preset ${loadPresets().length + 1}`;
-    const list = loadPresets();
-    list.push({
-      name,
-      position: renderState.cameraPosition,
-      rotation: renderState.cameraRotation,
-      fov: renderState.fieldOfView,
-    });
-    savePresets(list);
-    presetNameEl.value = '';
-    renderPresets();
-  }
-
-  // Detaches from any followed champion - a preset is a fixed vantage point.
-  // `fps` is required: in `top` mode the camera is on the game's rails and a
-  // written cameraPosition does nothing. Never `tps`, which closes the game.
-  function applyPreset(preset) {
-    postRender({
-      cameraMode: 'fps',
-      cameraAttached: false,
-      selectionName: '',
-      cameraPosition: preset.position,
-      cameraRotation: preset.rotation,
-      fieldOfView: preset.fov,
-    });
-    lastAction = { name: null, kind: null };
-    renderRosterState();
-  }
-
-  presetSaveEl.addEventListener('click', saveCurrentPreset);
-  presetNameEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') saveCurrentPreset();
-    if (e.key === 'Escape') presetNameEl.blur();
+  setupToggleEl.addEventListener('click', () => {
+    const open = setupPanelEl.hidden;
+    setupPanelEl.hidden = !open;
+    setupToggleEl.classList.toggle('open', open);
   });
 
   function applyRenderState(render) {
@@ -3354,7 +3231,6 @@
   connect();
   renderTransport();
   renderZoom();
-  renderPresets();
   showRailTab('events');
 </script>
 </body>
