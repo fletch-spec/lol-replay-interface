@@ -139,28 +139,31 @@
     margin: 0 2px;
   }
 
-  .camera-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 11px;
+  /* Camera distance lives in the status bar next to Cinematic - it is adjusted
+     while watching, so it belongs with the other live controls. */
+  .camera-bar-label {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--dim);
   }
-  .camera-bar-label {
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-  .camera-bar input[type='range'] {
-    flex: 0 1 220px;
+  .scene-controls input[type='range'] {
+    flex: 0 0 130px;
     accent-color: var(--ok);
     cursor: pointer;
+    vertical-align: middle;
   }
   .camera-bar-value {
     font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 11px;
     color: var(--text);
-    min-width: 34px;
+    min-width: 38px;
   }
-  .camera-bar-hint { margin-left: auto; }
+  .roster-hint {
+    font-size: 10px;
+    color: var(--dim);
+    padding-left: 2px;
+  }
 
   .roster-block {
     display: flex;
@@ -1126,6 +1129,12 @@
         <span class="chip loop" id="loopChip"></span>
       </div>
       <span class="scene-controls disabled" id="scene">
+        <span class="camera-bar-label">Distance</span>
+        <!-- Top-down spectator sits ~1900 units out; the upper end is deliberately
+             well past that so you can pull back wider than the normal view. -->
+        <input type="range" id="zoomInput" min="700" max="14000" step="100" value="2052" />
+        <span class="camera-bar-value" id="zoomValue">2052</span>
+        <span class="control-sep"></span>
         <button class="cinematic-btn" id="cinematicBtn">Cinematic</button>
         <button class="setup-toggle" id="setupToggle">Setup</button>
       </span>
@@ -1140,6 +1149,17 @@
       </div>
     </div>
 
+    <div class="roster disabled" id="roster">
+      <div class="roster-hint">portrait = camera · name = target frame</div>
+      <div class="roster-block">
+        <div class="roster-block-label">Blue</div>
+        <div class="roster-list" id="blueList"></div>
+      </div>
+      <div class="roster-block">
+        <div class="roster-block-label">Red</div>
+        <div class="roster-list" id="redList"></div>
+      </div>
+    </div>
     <div class="transport disabled" id="transport">
       <div class="transport-controls card">
         <span class="cmd-group" id="transportCmds"></span>
@@ -1209,25 +1229,6 @@
       </div>
     </div>
 
-    <div class="roster disabled" id="roster">
-      <div class="camera-bar">
-        <span class="camera-bar-label">Camera distance</span>
-        <!-- Top-down spectator sits ~1900 units out; the upper end here is
-             deliberately well past that so you can pull back wider than the
-             normal view. -->
-        <input type="range" id="zoomInput" min="700" max="14000" step="100" value="2052" />
-        <span class="camera-bar-value" id="zoomValue">2052</span>
-        <span class="camera-bar-hint">portrait = camera · name = target frame</span>
-      </div>
-      <div class="roster-block">
-        <div class="roster-block-label">Blue</div>
-        <div class="roster-list" id="blueList"></div>
-      </div>
-      <div class="roster-block">
-        <div class="roster-block-label">Red</div>
-        <div class="roster-list" id="redList"></div>
-      </div>
-    </div>
   </div>
 
 <script>
