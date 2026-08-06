@@ -21,8 +21,8 @@ Code: C:\dev\lol-replay-interface\app\
 Stack: Node + Express helper (server.js), single-file HTML/vanilla JS panel
 (public/index.html), no build step, Windows.
 
-Read C:\dev\lol-replay-interface\lol_replay_controller.md now,
-specifically the Notes section - it has hard-won gotchas from 001-004 that will
+Read the wiki's Replay API page now
+(https://github.com/fletch-spec/lol-replay-interface/wiki/Replay-API) - it has hard-won gotchas from 001-004 that will
 cost you real time to rediscover if you skip it. Highlights, so you can't miss
 them even if you skip that step:
 
@@ -63,7 +63,7 @@ Per brief:
    code and assume it works. Verify with curl and/or the browser.
 5. When done: brief state -> complete, set updated:, move ready/ -> archive/,
    append to brief_log.md, update the queue table and Stats in
-   lol_replay_controller.md. If anything in the brief turned out wrong (API
+   the wiki. If anything in the brief turned out wrong (API
    shape, an assumption, a mechanism that doesn't work), write an Outcome
    section into the archived brief file explaining what actually happened -
    the next session needs this more than a clean "done" checkbox.

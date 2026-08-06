@@ -67,7 +67,7 @@ subtly different from `M`.
 ## Notes
 
 **Why the hotkeys aren't enough, specifically.** This is already logged in
-`docs/REPLAY_API.md` as "keyboard shortcuts die silently when the panel loses
+the wiki's Replay API page as "keyboard shortcuts die silently when the panel loses
 focus", and it's the same root cause behind the Stream Deck idea in the project
 doc. The panel is a second-monitor instrument played while another window has
 focus. Treat click as the primary input and the keyboard as the accelerator for
@@ -96,7 +96,7 @@ Eight of twelve are keyboard-only.
 list an absolutely-positioned dropdown because a 170px in-flow column truncated
 every description. That was the right call at 720px. The panel is 1400px now,
 and the same dropdown drops *over* the scrub track - so opening the list to find
-a moment hides the bar you're about to click. `ui_polish_plan.md` phase 3
+a moment hides the bar you're about to click. the UI Polish Plan phase 3
 already specifies the replacement (a persistent right rail with filter chips and
 auto-scroll to the current event); this brief is the natural place to land it.
 Read that file's phases 3 and 4 before starting - several items here are already
@@ -107,7 +107,7 @@ time bubble, time readout, legend. That happened one brief at a time and has
 never been designed as a whole. Consider whether the legend earns permanent
 space once cue and loop controls are visible and self-labelling.
 
-**Known layout bugs to fold in** (all in `docs/REPLAY_API.md`): `.speed-btn.primary`
+**Known layout bugs to fold in** (all in the wiki's Replay API page): `.speed-btn.primary`
 draws an accent border while `.active` draws an accent fill, so two speed
 buttons read as selected at once; seeks lag 100–200ms with no in-flight
 indication, which invites a second click; the objective marker lane renders as
