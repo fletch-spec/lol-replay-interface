@@ -59,30 +59,23 @@
     opacity: 0.4;
     pointer-events: none;
   }
-  /* Scene controls (brief 006) */
-  .scene {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
+  /* Scene controls (brief 006). These live in the status bar: Cinematic is
+     pressed during a take and Setup is the door to everything that isn't. */
+  .scene-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     transition: opacity 0.15s ease;
   }
-  .scene.disabled {
+  .scene-controls.disabled {
     opacity: 0.4;
     pointer-events: none;
   }
-  .scene-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    font-size: 11px;
-    color: var(--dim);
-  }
   .cinematic-btn {
     flex: 0 0 auto;
-    font-size: 13px;
-    padding: 8px 14px;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 7px;
   }
   .cinematic-btn.active {
     background: var(--warn);
@@ -93,7 +86,6 @@
      and then leave it alone. Cinematic is the button you actually press during
      a take, so it stays out here and the 17 chips live behind Setup. */
   .setup-toggle {
-    margin-left: auto;
     font-size: 11px;
     padding: 6px 12px;
     border-radius: 7px;
@@ -257,23 +249,6 @@
   }
   .roster-info:hover {
     background: rgba(77, 141, 255, 0.14);
-  }
-  .roster-key {
-    position: absolute;
-    top: -6px;
-    left: -6px;
-    width: 18px;
-    height: 18px;
-    border-radius: 5px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--dim);
-    z-index: 1;
   }
   .roster-portrait {
     width: 44px;
@@ -1144,6 +1119,10 @@
     <div class="statusbar card">
       <div class="dot helper-down" id="statusDot"></div>
       <div class="status-text" id="statusText">Connecting to helper…</div>
+      <span class="scene-controls disabled" id="scene">
+        <button class="cinematic-btn" id="cinematicBtn">Cinematic</button>
+        <button class="setup-toggle" id="setupToggle">Setup</button>
+      </span>
       <div class="chips">
         <span class="chip mode" id="gameMode">-</span>
         <span class="chip" id="speedChip">1×</span>
@@ -1152,7 +1131,29 @@
       </div>
     </div>
 
+    <!-- Opened from Setup in the status bar. Everything configured once and then
+         left alone lives here, out of the way of a take. -->
+    <div class="scene-setup card" id="setupPanel" hidden>
+      <div class="setup-group">
+        <span class="cue-controls-label">HUD</span>
+        <div class="toggle-grid" id="toggleGrid"></div>
+      </div>
+    </div>
+
     <div class="transport disabled" id="transport">
+      <div class="transport-controls card">
+        <span class="cmd-group" id="transportCmds"></span>
+        <button class="pause-btn" id="pauseBtn">Pause</button>
+        <div class="speed-presets" id="speedPresets">
+          <button class="speed-btn" data-speed="0.25">0.25×</button>
+          <button class="speed-btn primary" data-speed="0.5">0.5×</button>
+          <button class="speed-btn" data-speed="1">1×</button>
+          <button class="speed-btn" data-speed="2">2×</button>
+          <button class="speed-btn" data-speed="4">4×</button>
+        </div>
+        <span class="cmd-group" id="eventCmds"></span>
+      </div>
+
       <div class="timeline-row card">
         <div class="scrub-area" id="scrubArea">
           <div class="scrub-track" id="scrubTrack">
@@ -1198,19 +1199,6 @@
         </div>
       </div>
 
-      <div class="transport-controls card">
-        <span class="cmd-group" id="transportCmds"></span>
-        <button class="pause-btn" id="pauseBtn">Pause</button>
-        <div class="speed-presets" id="speedPresets">
-          <button class="speed-btn" data-speed="0.25">0.25×</button>
-          <button class="speed-btn primary" data-speed="0.5">0.5×</button>
-          <button class="speed-btn" data-speed="1">1×</button>
-          <button class="speed-btn" data-speed="2">2×</button>
-          <button class="speed-btn" data-speed="4">4×</button>
-        </div>
-        <span class="cmd-group" id="eventCmds"></span>
-      </div>
-
       <div class="cue-controls card">
         <span class="cue-controls-label">Cues</span>
         <span class="cmd-group" id="cueCmds"></span>
@@ -1218,21 +1206,6 @@
         <span class="cue-controls-label">Loop</span>
         <span class="cmd-group" id="loopCmds"></span>
         <span class="hint">shift+←/→ = ±1s · alt-drag = no snap · shift+click an event marker = cue</span>
-      </div>
-    </div>
-
-    <!-- Live row: things touched during a take. Everything you configure once
-         and then leave alone lives behind Setup. -->
-    <div class="scene disabled" id="scene">
-      <div class="scene-row card">
-        <button class="cinematic-btn" id="cinematicBtn">Cinematic</button>
-        <button class="setup-toggle" id="setupToggle">Setup</button>
-      </div>
-      <div class="scene-setup card" id="setupPanel" hidden>
-        <div class="setup-group">
-          <span class="cue-controls-label">HUD</span>
-          <div class="toggle-grid" id="toggleGrid"></div>
-        </div>
       </div>
     </div>
 
@@ -1292,8 +1265,6 @@
   const toggleGridEl = document.getElementById('toggleGrid');
   const blueListEl = document.getElementById('blueList');
   const redListEl = document.getElementById('redList');
-  const BLUE_KEYS = ['1', '2', '3', '4', '5'];
-  const RED_KEYS = ['Q', 'W', 'E', 'R', 'T'];
 
   const scrubMarkersEl = document.getElementById('scrubMarkers');
   const eventsToggleEl = document.getElementById('eventsToggle');
@@ -1549,7 +1520,7 @@
     }
   }
 
-  function buildRosterItem(player, key) {
+  function buildRosterItem(player) {
     const item = document.createElement('div');
     item.className = 'roster-item';
     item.dataset.name = player.riotIdGameName;
@@ -1563,11 +1534,6 @@
     camHint.className = 'roster-cam-hint';
     camHint.textContent = '◉';
     portraitWrap.appendChild(camHint);
-
-    const keyEl = document.createElement('div');
-    keyEl.className = 'roster-key';
-    keyEl.textContent = key || '';
-    portraitWrap.appendChild(keyEl);
 
     const img = document.createElement('img');
     img.className = 'roster-portrait';
@@ -1606,9 +1572,9 @@
     return item;
   }
 
-  function renderTeamBlock(container, players, keys) {
+  function renderTeamBlock(container, players) {
     container.replaceChildren();
-    players.forEach((p, i) => container.appendChild(buildRosterItem(p, keys[i])));
+    for (const player of players) container.appendChild(buildRosterItem(player));
   }
 
   // Which card shows as active, and in which of the two states. Driven by what
@@ -1701,8 +1667,8 @@
     );
     const blue = players.filter((p) => p.team === 'ORDER');
     const red = players.filter((p) => p.team === 'CHAOS');
-    renderTeamBlock(blueListEl, blue, BLUE_KEYS);
-    renderTeamBlock(redListEl, red, RED_KEYS);
+    renderTeamBlock(blueListEl, blue);
+    renderTeamBlock(redListEl, red);
     renderRosterState();
 
     // Markers and event labels can both be built before the first roster
