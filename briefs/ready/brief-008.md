@@ -5,121 +5,86 @@ created: 2026-08-06
 updated: 2026-08-06
 agent: user
 project: LOL-REPLAY-CONTROLLER
-depends_on: [brief-006, brief-007]
+depends_on: [brief-006]
 ---
 
-# Brief 008: Depth Of Field + Fog
+# Brief 008: Camera Stability
 
-Closes [#6](https://github.com/fletch-spec/lol-replay-interface/issues/6).
+Closes [#3](https://github.com/fletch-spec/lol-replay-interface/issues/3).
 
 ## Problem Statement
 
-Brief 006 stripped the HUD, so the footage no longer looks like a scoreboard.
-It still looks like a game being rendered flat. Depth of field and fog are the
-layer that makes a shot read as footage rather than gameplay - a fight with the
-far side of the map faded out and everything outside the focal band softened is
-the difference between a screen recording and something you'd put in a video.
-The API exposes all of it, and the panel touches none of it. Brief 006 asked for
-these and deferred them because the toggle grid was already full and brief 007
-was about to rewrite that layout; 007 has now landed, so the layout question is
-answered and this is the last thing the panel can't do.
+The follow-cam works, and then the mouse touches the game window and it doesn't.
+`fps` mode leaves the client's own First Person Camera controls live, so any
+mouse movement over the game overwrites `cameraRotation`, and bumping the screen
+edge flips the client to manual camera - which resets `cameraMode` to `top` and
+makes every camera field inert until something re-asserts it. Measured directly:
+a rotation set to `{0, 56, 0}` read back as `{21.1, 48.8, 0}` after a few seconds
+of the mouse being over the game. During a recording that means the shot drifts
+off the champion mid-sentence and there is no way to get it back without
+stopping to re-lock. The API documents `cameraLockX/Y/Z` as "Lock FPS Camera at
+x axis", which is the obvious guard, and nobody has ever sent them.
 
 ## Done Looks Like
 
-You can set up a shot - pick a camera preset, soften the background, drop fog
-into the river - and save it, and coming back to that preset later gives you the
-same shot rather than the same camera angle with the effects gone. Turning
-everything off is one action and returns the replay to plain rendering. Nothing
-is on by default.
+You lock the camera to a champion, move the mouse across the game window, and
+the shot stays where you put it. If the camera does get disturbed - by the
+client's own camera dropdown, an edge bump, or anything else - the panel notices
+and the shot comes back without you having to work out what happened.
 
 ## Hardest Part
 
-**Depth of field is camera-relative and the camera moves.** The focal bands are
-distances *from the camera*, and brief 006's follow-cam distance slider runs the
-camera from ~700 to ~14000 units out. A `depthOfFieldMid` tuned at one distance
-is focused on empty air at another, so a single global DoF setting is wrong
-almost everywhere.
+Finding out what `cameraLockX/Y/Z` actually lock. The names say "Lock FPS Camera
+at x axis" and that is the entire documentation. They could lock rotation about
+an axis, lock position along an axis, or clamp one component of the look
+direction. All three are plausible and they imply different guards.
 
-There are two defensible answers and this brief has to pick one before building
-any UI:
+This is a testing brief before it is a building brief. Establish what the three
+flags do, one at a time, with the mouse deliberately disturbing the camera
+between reads - then decide what to do with them.
 
-1. **Bands scale with `followDistance`** - DoF works everywhere, at the cost of
-   the numbers meaning something different depending on zoom.
-2. **DoF belongs to camera presets only** - fixed vantage points have a fixed
-   distance, so the bands are meaningful. Follow-cam gets fog but not DoF.
-
-Decide this first. Building the sliders before deciding means building them
-twice.
+If they turn out not to guard rotation at all, the fallback is re-asserting the
+camera from the panel, and the brief becomes about doing that without fighting
+the user when they *want* to move the camera manually.
 
 ## Can't Skip
 
-- **Everything off by default.** Brief 006's warning stands: dramatic in stills,
-  distracting across 30 minutes of narration. A fresh panel must render exactly
-  as it does today.
-- **Camera presets carry these settings.** A "dragon pit" preset that restores
-  position, rotation and FOV but not its fog and DoF is half a preset. Presets
-  saved before this brief must still load without error and without applying
-  garbage - they have no such fields.
-- **One action turns everything off**, without having to remember which of the
-  three systems you touched.
-- **Verify by read-back, not status code.** The API returns HTTP 200 for field
-  names that don't exist and silently ignores them. Confirm each field from the
-  1Hz render broadcast.
-- **No new write path.** Use the existing `postRender()`; do not add a second
-  way to talk to `/replay/render`.
+- **Establish what each of `cameraLockX`, `cameraLockY`, `cameraLockZ` does**,
+  individually, verified on screen. Record it in the wiki's Replay API page
+  whatever the answer is - including "nothing observable", which is a result.
+- **A locked shot survives mouse movement over the game window.** This is the
+  actual acceptance test. Lock a champion, move the mouse around for ten
+  seconds, confirm the framing is unchanged.
+- **Manual camera control must still be possible.** Whatever guard ships must be
+  something you can turn off, or must not apply when no champion is locked.
+  Do not make the camera un-movable.
+- **Recovery must not need a re-click.** If the client resets `cameraMode`, the
+  panel should restore the shot on its own rather than silently doing nothing.
+- **No new write path.** Use the existing `lockCamera()` / `postRender()`.
 - **Never send `cameraMode: "tps"`.** It closes the game, reproduced twice.
-- Do not dump sixteen sliders into the scene card. Brief 007 just laid this
-  panel out; respect it.
 
 ## Notes
 
-**Read `/Help?format=Full&target=Render` first**, not this field list. It
-carries descriptions the swagger JSON drops entirely. The list below is from a
-live GET and is grouped by system, but the semantics of the numeric fields have
-not been verified against the client's own docs.
+**What is already known**, so this doesn't get re-derived:
 
-```
-depthOfFieldEnabled, depthOfFieldNear, depthOfFieldMid, depthOfFieldFar,
-depthOfFieldWidth, depthOfFieldCircle, depthOfFieldDebug
+- `fps` mode is required for any camera control at all. In `top` the camera is
+  on the game's directed rails and every camera field is inert.
+- `lockCamera()` already sends `cameraMode` on every lock, specifically so a
+  lock recovers from the client having reset it. That was a fix for exactly this
+  family of problem and is worth reading before adding another mechanism.
+- The client's First Person Camera keys are numpad 4/5/6/8 plus mouse, and are
+  rebindable under Options -> Hotkeys -> First Person Camera. It may be that the
+  cleanest guard is telling the user to unbind them, in which case say so in the
+  wiki rather than building something.
+- `cameraLookSpeed` ("Mouse look speed of the camera when in FPS mode") is
+  worth trying at `0` as a cheap experiment before anything else. If mouse look
+  can simply be slowed to nothing, that may be the whole fix.
 
-depthFogEnabled, depthFogColor, depthFogStart, depthFogEnd, depthFogIntensity
+**Detecting disturbance.** The panel already receives the full render object at
+1Hz. Comparing the last-written `cameraRotation` against what comes back is
+enough to notice drift without any new polling. Care is needed not to fight a
+deliberate manual adjustment - a guard that snaps the camera back every second
+while the user is trying to frame a shot by hand is worse than the drift.
 
-heightFogEnabled, heightFogColor, heightFogStart, heightFogEnd, heightFogIntensity
-```
-
-**Three systems, not one.** Worth keeping distinct in the UI:
-
-- **Depth of field** - blurs outside a focal band. `Near`/`Mid`/`Far` are the
-  distance bands, `Width` how wide the sharp band is, `Circle` the bokeh size.
-- **Depth fog** - fog by distance from camera. Fades the far side of the map.
-- **Height fog** - fog by world height. Pools in low ground and the river.
-
-`depthOfFieldDebug` visualises the bands. Likely the fastest way to tune the
-focal distance without guessing - try it early, and consider leaving it behind a
-modifier rather than shipping it as a visible control.
-
-**These are sliders and colour pickers, not chips.** The HUD toggles are
-booleans and the chip grid suits them. This is a different control vocabulary,
-which is part of why it wants its own home rather than more chips in the scene
-card. A collapsed disclosure that is closed by default would keep the panel
-readable, given everything here is off by default anyway.
-
-**Fog colour is a `Color`/`ColorValue` in the schema, not a hex string.** Check
-its shape before building a picker.
-
-**Preset migration.** Existing presets in `localStorage` under
-`campresets:<mapName>` hold `{name, position, rotation, fov}`. Loading one that
-predates this brief must leave the effects alone rather than applying
-`undefined`, and re-saving it should capture the current settings. This is the
-most likely place for a silent bug.
-
-**Interaction with the follow-cam.** Fog is camera-position-independent and
-should work under the follow-cam without any special handling. DoF is the one
-that needs the Hardest Part decision. If the answer is "presets only", say so in
-the UI rather than letting someone tune a DoF that does nothing while a
-champion is locked.
-
-**Out of scope:** `/replay/sequence`, still. Keyframed effects over time serve
-edited cinematics rather than live control. Also out of scope: `sunDirection`
-and the skybox fields - same category, but nobody has asked for them and this
-brief is already the largest remaining surface.
+**Out of scope:** camera paths, sequences, and anything that moves the camera on
+its own. This brief keeps a shot still; it does not add new shots.
