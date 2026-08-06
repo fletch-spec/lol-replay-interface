@@ -1147,6 +1147,7 @@
              well past that so you can pull back wider than the normal view. -->
         <input type="range" id="zoomInput" min="700" max="14000" step="100" value="2052" />
         <span class="camera-bar-value" id="zoomValue">2052</span>
+        <button class="setup-toggle" id="zoomResetBtn" title="Back to the default player-view distance">Reset</button>
         <button class="setup-toggle" id="namesToggle" title="Replace summoner names with placeholders, for screenshots and recording">Hide names</button>
         <span class="control-sep"></span>
         <button class="cinematic-btn" id="cinematicBtn">Cinematic</button>
@@ -1272,6 +1273,7 @@
   const rosterEl = document.getElementById('roster');
   const zoomInputEl = document.getElementById('zoomInput');
   const zoomValueEl = document.getElementById('zoomValue');
+  const zoomResetBtnEl = document.getElementById('zoomResetBtn');
 
   const sceneEl = document.getElementById('scene');
   const cinematicBtnEl = document.getElementById('cinematicBtn');
@@ -1459,7 +1461,7 @@
   let followDistance = FOLLOW_BASE_DISTANCE;
   try {
     const saved = Number(localStorage.getItem('followDistance'));
-    if (isFinite(saved) && saved > 0) followDistance = saved;
+    if (isFinite(saved) && saved > 0) followDistance = Math.round(saved);
   } catch (err) {
     // Storage unavailable - the default framing is fine.
   }
@@ -1637,8 +1639,33 @@
 
   function renderZoom() {
     zoomInputEl.value = String(Math.round(followDistance));
-    zoomValueEl.textContent = String(Math.round(followDistance));
+    // Read back rather than reusing the number: a range input snaps to its own
+    // step, so the thumb and the readout would otherwise disagree.
+    zoomValueEl.textContent = zoomInputEl.value;
   }
+
+  // Aligned to the slider's own step so the thumb, the readout and the applied
+  // offset are all the same number.
+  function snapToSliderStep(value) {
+    const step = Number(zoomInputEl.step) || 1;
+    const min = Number(zoomInputEl.min) || 0;
+    return Math.round((value - min) / step) * step + min;
+  }
+
+  function setFollowDistance(value) {
+    followDistance = snapToSliderStep(value);
+    try {
+      localStorage.setItem('followDistance', String(followDistance));
+    } catch (err) {
+      // Not worth failing over.
+    }
+    renderZoom();
+    scheduleFramingUpdate();
+  }
+
+  // FOLLOW_BASE_DISTANCE is the confirmed-good framing, and lands the camera at
+  // about the height the game's own top-down camera sits at.
+  zoomResetBtnEl.addEventListener('click', () => setFollowDistance(FOLLOW_BASE_DISTANCE));
 
   zoomInputEl.addEventListener('input', () => {
     followDistance = Number(zoomInputEl.value);
