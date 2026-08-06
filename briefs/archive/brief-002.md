@@ -13,7 +13,7 @@ depends_on: [brief-001]
 ## Problem Statement
 
 Controlling a replay currently means alt-tabbing to the game, finding the tiny
-replay bar, and dragging it — which breaks the recording and puts the mouse
+replay bar, and dragging it - which breaks the recording and puts the mouse
 cursor on camera. The panel needs a transport big enough to operate blind while
 talking: play, pause, scrub, speed, and frame-accurate nudging.
 
@@ -28,7 +28,7 @@ display shows game clock, not wall clock.
 ## Hardest Part
 
 Seek behaviour under load. Naively firing a POST per mousemove floods the client
-and the game visibly hitches — which is fatal, because this is being recorded.
+and the game visibly hitches - which is fatal, because this is being recorded.
 Scrub must update the UI optimistically at 60fps while sending at most one write
 to the client, on release.
 
@@ -51,7 +51,7 @@ to the client, on release.
 **State comes from the client, not the panel.** `/replay/playback` is the single
 source of truth. The panel renders what it polls. If you track paused state
 locally, it will drift the first time you pause in-game and the button will lie.
-Only exception is the scrub bar during an active drag — that follows the mouse
+Only exception is the scrub bar during an active drag - that follows the mouse
 until release, then hands control back to polling.
 
 **Endpoint:**
@@ -63,7 +63,7 @@ POST /replay/playback    {speed: 2.0}      # speed
 POST /replay/playback    {paused: true}    # pause
 ```
 
-Confirm field names against `/docs` — `seeking` in particular is read-only and
+Confirm field names against `/docs` - `seeking` in particular is read-only and
 POSTing it may error.
 
 **Seek sequencing.** Wrap it:
@@ -76,15 +76,15 @@ async function seekTo(t) {
 }
 ```
 
-The ~150ms lag is inherent. Don't fight it — just don't multiply it by firing
+The ~150ms lag is inherent. Don't fight it - just don't multiply it by firing
 fifty of them during a drag.
 
 **Layout.** Transport spans the full width at the bottom of the panel, and it
-should be uncomfortably large — the scrub track at least 40px tall. This is the
+should be uncomfortably large - the scrub track at least 40px tall. This is the
 control you'll use most and often peripherally. Leave vertical space above the
 track: brief 004 renders event markers into it and brief 005 adds cue pins.
 
-**Speed and voiceover.** 0.5× is the useful default for narration — real time is
+**Speed and voiceover.** 0.5× is the useful default for narration - real time is
 too fast to explain anything, and 0.25× makes champion animations look wrong
 enough to distract. Make 0.5× visually the primary button.
 

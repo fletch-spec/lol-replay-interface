@@ -16,8 +16,8 @@
     --warn: #e0b23c;
     --bad: #e05c5c;
     --accent: #4d8dff;
-    /* Team colours. Blue/red on this panel always mean ORDER/CHAOS — never a
-       category — which is why structures moved off the accent blue below. */
+    /* Team colours. Blue/red on this panel always mean ORDER/CHAOS - never a
+       category - which is why structures moved off the accent blue below. */
     --blue: #4d8dff;
     --red: #e0576b;
     /* Event categories. */
@@ -468,7 +468,7 @@
     pointer-events: none;
   }
 
-  /* Minute ticks — without these, "18:42" has nothing to be 18:42 *of*. */
+  /* Minute ticks - without these, "18:42" has nothing to be 18:42 *of*. */
   .scrub-ticks {
     position: absolute;
     inset: 0;
@@ -497,7 +497,7 @@
     white-space: nowrap;
   }
 
-  /* Event markers (brief 004) — three lanes so events that collide in time
+  /* Event markers (brief 004) - three lanes so events that collide in time
      stop colliding in pixels. Clustering runs per lane. */
   .scrub-markers {
     position: absolute;
@@ -516,7 +516,7 @@
     opacity: 0.58;
     transition: opacity 0.12s ease, transform 0.12s ease;
   }
-  /* Invisible 16px hit target — the drawn marker stays thin. */
+  /* Invisible 16px hit target - the drawn marker stays thin. */
   .marker::before {
     content: '';
     position: absolute;
@@ -562,7 +562,7 @@
   .marker .cap.order { background: var(--blue); }
   .marker .cap.chaos { background: var(--red); }
 
-  /* Hover card — replaces native title tooltips. For a cluster it lists every
+  /* Hover card - replaces native title tooltips. For a cluster it lists every
      event, each seeking to its own timestamp: before this, only the first
      event in a cluster was reachable at all. */
   .hover-card {
@@ -642,7 +642,7 @@
     flex-shrink: 0;
   }
 
-  /* Ghost playhead — preview of where a click would land, with magnetic snap. */
+  /* Ghost playhead - preview of where a click would land, with magnetic snap. */
   .scrub-ghost {
     position: absolute;
     top: 0;
@@ -677,7 +677,7 @@
   /* --- Cue points + A/B loop (brief 005) --- */
 
   /* Cues live in the strip *below* the track; brief 004's event markers live in
-     the gutter above it. Different side, different shape, different colour —
+     the gutter above it. Different side, different shape, different colour -
      two marker types on one bar must not be confusable. */
   .cue-pins {
     position: absolute;
@@ -870,7 +870,7 @@
     border-radius: 7px;
   }
 
-  /* Command buttons — one visual language for every clickable action, each
+  /* Command buttons - one visual language for every clickable action, each
      carrying its own hotkey so the two input methods read as the same thing. */
   .cmd-group {
     display: flex;
@@ -945,7 +945,7 @@
     background: var(--cue);
     border-radius: 50%;
   }
-  /* Persistent rail. Replaces the floating dropdowns from briefs 004/005 — at
+  /* Persistent rail. Replaces the floating dropdowns from briefs 004/005 - at
      1400px wide they opened straight over the scrub track, hiding the bar you
      were about to click. */
   .rail {
@@ -1127,7 +1127,7 @@
     color: #06121f;
   }
 
-  /* Fixed-width rather than flex:1 — stretched across a 1340px card the speed
+  /* Fixed-width rather than flex:1 - stretched across a 1340px card the speed
      buttons were ~230px each, which reads as five giant slabs. */
   .speed-presets {
     display: flex;
@@ -1171,9 +1171,9 @@
       <div class="dot helper-down" id="statusDot"></div>
       <div class="status-text" id="statusText">Connecting to helper…</div>
       <div class="chips">
-        <span class="chip mode" id="gameMode">—</span>
+        <span class="chip mode" id="gameMode">-</span>
         <span class="chip" id="speedChip">1×</span>
-        <span class="chip" id="paused">—</span>
+        <span class="chip" id="paused">-</span>
         <span class="chip loop" id="loopChip"></span>
       </div>
     </div>
@@ -1338,11 +1338,11 @@
   // Single source of truth, refreshed ~10x/sec from the helper's WebSocket push.
   let lastPolled = { time: 0, length: 0, speed: 1, paused: false, seeking: false };
 
-  // Scrub drag state — follows the mouse locally, writes once on release.
+  // Scrub drag state - follows the mouse locally, writes once on release.
   let isDragging = false;
   let dragPreviewTime = null;
 
-  // Seek coalescing — rapid arrow presses / drags collapse to the latest target only.
+  // Seek coalescing - rapid arrow presses / drags collapse to the latest target only.
   let seekRunning = false;
   let pendingSeekTarget = null;
   let pendingSeekHold = false;
@@ -1488,7 +1488,7 @@
   let lockInFlight = false;
 
   // Follow-cam framing. Confirmed on screen: yaw 0 pairs with an offset on -z.
-  // The zoom slider scales y and z together along this direction — holding the
+  // The zoom slider scales y and z together along this direction - holding the
   // ratio is what lets distance change without ever re-aiming the camera.
   const FOLLOW_BASE = { y: 1700, z: -1150 };
   const FOLLOW_BASE_DISTANCE = Math.hypot(FOLLOW_BASE.y, FOLLOW_BASE.z); // ~2052
@@ -1499,7 +1499,7 @@
     const saved = Number(localStorage.getItem('followDistance'));
     if (isFinite(saved) && saved > 0) followDistance = saved;
   } catch (err) {
-    // Storage unavailable — the default framing is fine.
+    // Storage unavailable - the default framing is fine.
   }
 
   function followOffset() {
@@ -1508,7 +1508,7 @@
   }
 
   // Switching cameraMode resets fieldOfView, so every camera write carries the
-  // client's current value forward explicitly — otherwise locking onto a
+  // client's current value forward explicitly - otherwise locking onto a
   // champion would silently snap the FOV back to a default. There is no FOV
   // control in the panel: distance is the one zoom that matters here, and two
   // separate "zoom" sliders that interact was worse than one that works.
@@ -1525,9 +1525,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           // cameraMode must be sent every time, not set once. Anything that
-          // changes the camera mode in-game — picking "Directed Camera" from
+          // changes the camera mode in-game - picking "Directed Camera" from
           // the client's own dropdown, or bumping the screen edge, which flips
-          // it to manual — puts it back to "top", where the camera is on the
+          // it to manual - puts it back to "top", where the camera is on the
           // game's rails and selectionName/cameraAttached do nothing at all.
           // Without this line the roster buttons silently stop working.
           cameraMode: 'fps',
@@ -1552,7 +1552,7 @@
     }
   }
 
-  // Selection only — brings up the target frame in game without touching the
+  // Selection only - brings up the target frame in game without touching the
   // camera. This is the single-click equivalent of the in-game hotkeys; the
   // camera lock is the double-click equivalent, and they are deliberately
   // separate controls here because they were conflated before.
@@ -1643,7 +1643,7 @@
   let lastAction = { name: null, kind: null };
 
   // Re-frames the live follow when the zoom slider moves. Deliberately not
-  // sharing `lockInFlight` with the roster clicks — that guard drops calls, and
+  // sharing `lockInFlight` with the roster clicks - that guard drops calls, and
   // a dropped call here would leave the camera at the wrong distance. Leading
   // -edge throttle instead, so dragging the slider stays responsive without
   // firing a request per pixel. `selectionName` has to go in every one of these:
@@ -1731,7 +1731,7 @@
     renderRosterState();
 
     // Markers and event labels can both be built before the first roster
-    // arrives — no team caps, and summoner names where champion names belong.
+    // arrives - no team caps, and summoner names where champion names belong.
     // Redraw once the names are actually resolvable.
     if (markersRenderedWithoutTeams && playerByName.size > 0) {
       renderMarkers();
@@ -1751,14 +1751,14 @@
       const res = await fetch('/api/liveclientdata/gamestats');
       if (!res.ok) throw new Error(`status_${res.status}`);
       const data = await res.json();
-      gameModeEl.textContent = data.gameMode || '—';
+      gameModeEl.textContent = data.gameMode || '-';
       gameModeKnown = true;
       // Camera presets are world coordinates, so they key by map, not game mode.
       mapKey = data.mapName || data.gameMode || null;
       renderPresets();
       syncCuesToIdentity(); // identity is only complete once gameMode lands
     } catch (err) {
-      // replay may not be loaded yet — retry loop below will try again
+      // replay may not be loaded yet - retry loop below will try again
     }
   }
 
@@ -1802,7 +1802,7 @@
   ];
 
   // Restoring the HUD forces these back on regardless of what was saved. Exact
-  // restore alone can hand back a state you can't actually work in — if any of
+  // restore alone can hand back a state you can't actually work in - if any of
   // these were already off when you hit Cinematic, turning it off would leave
   // you without a minimap or health bars and looking like it hadn't restored.
   const CINEMATIC_RESTORE_MIN = [
@@ -1845,7 +1845,7 @@
     }
   }
 
-  // Stores the *previous* values and restores those exactly — not defaults.
+  // Stores the *previous* values and restores those exactly - not defaults.
   // Persisted so a browser reload mid-cinematic can still put the HUD back.
   function readSavedHud() {
     try {
@@ -1965,7 +1965,7 @@
     renderPresets();
   }
 
-  // Detaches from any followed champion — a preset is a fixed vantage point.
+  // Detaches from any followed champion - a preset is a fixed vantage point.
   // `fps` is required: in `top` mode the camera is on the game's rails and a
   // written cameraPosition does nothing. Never `tps`, which closes the game.
   function applyPreset(preset) {
@@ -1991,7 +1991,7 @@
     renderState = render;
 
     // The client keeps following across a panel reload, but `lastAction` is
-    // panel-local and starts empty — so the distance slider did nothing until
+    // panel-local and starts empty - so the distance slider did nothing until
     // you re-clicked a portrait. Adopt a follow that's already running.
     //
     // The target name can't come from `selectionName`: it clears itself while
@@ -2017,7 +2017,7 @@
 
   // --- Event timeline ---
 
-  // Events accumulate here for the whole page lifetime — seeking backward must never wipe them.
+  // Events accumulate here for the whole page lifetime - seeking backward must never wipe them.
   // Keyed by content fingerprint, not EventID: the replay client re-emits the same real event
   // under a brand new EventID every time playback passes over that point again, so EventID
   // alone is not a safe dedup key here despite what it looks like it should be.
@@ -2045,7 +2045,7 @@
     if (cat) return cat;
     if (!IGNORED_EVENT_NAMES.has(event.EventName) && !loggedUnknownEvents.has(event.EventName)) {
       loggedUnknownEvents.add(event.EventName);
-      console.log(`[events] unrecognised EventName "${event.EventName}" — showing as unknown`, event);
+      console.log(`[events] unrecognised EventName "${event.EventName}" - showing as unknown`, event);
     }
     return 'unknown';
   }
@@ -2055,7 +2055,7 @@
   }
 
   // Events carry summoner names, which are unreadable at a glance mid-narration
-  // — "Rengar killed Lux" lands far faster than "Havokfrog killed FrontflipBaron".
+  // - "Rengar killed Lux" lands far faster than "SomeSummoner41 killed xX_Player".
   // Falls back to the raw name when it doesn't resolve to a champion, which is
   // what happens for turret and minion killers.
   function championName(name) {
@@ -2064,7 +2064,7 @@
   }
 
   // Structure IDs look like `Turret_TChaos_L2_P3_2521511112_0`. Only the team
-  // segment is safe to read — the L/P numbers have no documented lane mapping,
+  // segment is safe to read - the L/P numbers have no documented lane mapping,
   // so guessing "bot outer" from them would print confident nonsense. The raw
   // ID is useless in a readout, so drop it and lead with the killer instead.
   function structureSide(structureId) {
@@ -2081,21 +2081,21 @@
       case 'Multikill':
         return `${championName(event.KillerName)} multikill (${event.KillStreak}x)`;
       case 'FirstBlood':
-        return `First Blood — ${championName(event.Recipient)}`;
+        return `First Blood - ${championName(event.Recipient)}`;
       case 'Ace':
-        return `Ace — ${championName(event.Acer)}${event.AcingTeam ? ` (${sideName(event.AcingTeam)} team)` : ''}`.trim();
+        return `Ace - ${championName(event.Acer)}${event.AcingTeam ? ` (${sideName(event.AcingTeam)} team)` : ''}`.trim();
       case 'DragonKill':
-        return `Dragon (${event.DragonType || '?'}) — ${championName(event.KillerName)}`;
+        return `Dragon (${event.DragonType || '?'}) - ${championName(event.KillerName)}`;
       case 'BaronKill':
-        return `Baron — ${championName(event.KillerName)}`;
+        return `Baron - ${championName(event.KillerName)}`;
       case 'HeraldKill':
-        return `Herald — ${championName(event.KillerName)}`;
+        return `Herald - ${championName(event.KillerName)}`;
       case 'TurretKilled':
-        return `Turret${structureSide(event.TurretKilled)} — ${championName(event.KillerName) || '?'}`;
+        return `Turret${structureSide(event.TurretKilled)} - ${championName(event.KillerName) || '?'}`;
       case 'InhibKilled':
-        return `Inhibitor${structureSide(event.InhibKilled)} — ${championName(event.KillerName) || '?'}`;
+        return `Inhibitor${structureSide(event.InhibKilled)} - ${championName(event.KillerName) || '?'}`;
       case 'FirstBrick':
-        return `First Tower — ${championName(event.KillerName)}`.trim();
+        return `First Tower - ${championName(event.KillerName)}`.trim();
       default:
         return event.EventName;
     }
@@ -2207,7 +2207,7 @@
     marker.addEventListener('mousedown', (e) => e.stopPropagation());
     marker.addEventListener('click', (e) => {
       e.stopPropagation();
-      // Most cues land on events anyway — shift+click saves playing through to
+      // Most cues land on events anyway - shift+click saves playing through to
       // the moment just to press M there.
       if (e.shiftKey) placeCue(first.EventTime);
       else requestSeek(first.EventTime);
@@ -2321,7 +2321,7 @@
     return row;
   }
 
-  // Shared by event markers and cue pins — both anchor a card to a position on
+  // Shared by event markers and cue pins - both anchor a card to a position on
   // the track, they just build different rows.
   function openHoverCard(pxX, rows, anchorEl) {
     clearTimeout(hoverHideTimer);
@@ -2423,7 +2423,7 @@
 
   // The Replay API has no stable game identifier: /replay/game returns only a
   // processID (new every client launch) and no path in the whole spec carries a
-  // match ID or the replay filename — checked against the swagger, not assumed.
+  // match ID or the replay filename - checked against the swagger, not assumed.
   // So identity is the composite brief 005 names as its fallback. Imperfect, but
   // it distinguishes replays in practice, and events and cues must agree on it.
   function replayIdentity() {
@@ -2431,7 +2431,7 @@
   }
 
   function identityKnown() {
-    return gameModeEl.textContent !== '—' && (lastPolled.length || 0) > 0;
+    return gameModeEl.textContent !== '-' && (lastPolled.length || 0) > 0;
   }
 
   function eventsCacheKey() {
@@ -2457,7 +2457,7 @@
         return;
       }
     } catch (err) {
-      // Corrupt cache entry — fall through to a real harvest.
+      // Corrupt cache entry - fall through to a real harvest.
     }
 
     const originalTime = lastPolled.time;
@@ -2474,7 +2474,7 @@
       try {
         localStorage.setItem(cacheKey, JSON.stringify([...eventsByKey.values()]));
       } catch (err) {
-        // Storage full or unavailable — harvest still worked for this session.
+        // Storage full or unavailable - harvest still worked for this session.
       }
       requestSeek(originalTime);
     }
@@ -2492,7 +2492,7 @@
   }
 
   // The WebSocket can stay "connected" while the underlying replay swaps to a different game
-  // entirely (another app on this machine drives the same client) — processID is the signal
+  // entirely (another app on this machine drives the same client) - processID is the signal
   // that catches that case, since the WS state transition alone won't.
   function checkGameChange(processID) {
     if (processID == null) return;
@@ -2502,7 +2502,7 @@
     }
     if (processID === lastProcessId) return;
     lastProcessId = processID;
-    console.log('[events] replay processID changed mid-session — clearing accumulated events for the new game');
+    console.log('[events] replay processID changed mid-session - clearing accumulated events for the new game');
     handleNewGame();
   }
 
@@ -2547,7 +2547,7 @@
         }))
         .sort((a, b) => a.t - b.t);
     } catch (err) {
-      cues = []; // Corrupt entry — start clean rather than blocking the panel.
+      cues = []; // Corrupt entry - start clean rather than blocking the panel.
     }
     activeCueIndex = null;
     renderCues();
@@ -2558,7 +2558,7 @@
     try {
       localStorage.setItem(cuesStorageKey(), JSON.stringify(cues));
     } catch (err) {
-      // Storage full or unavailable — cues still work for this session.
+      // Storage full or unavailable - cues still work for this session.
     }
   }
 
@@ -2585,7 +2585,7 @@
   function placeCue(atTime) {
     if (!identityKnown()) return;
     const t = clamp(typeof atTime === 'number' ? atTime : getDisplayTime(), 0, lastPolled.length || 0);
-    // Double-tap guard — M is meant to be hit fast and without looking.
+    // Double-tap guard - M is meant to be hit fast and without looking.
     if (cues.some((c) => Math.abs(c.t - t) < 0.5)) return;
     cues.push({ t, note: '', lead: DEFAULT_LEAD });
     cues.sort((a, b) => a.t - b.t);
@@ -2656,7 +2656,7 @@
     renderLoop();
   }
 
-  // Driven by the same ~10Hz playback push the transport uses — no second
+  // Driven by the same ~10Hz playback push the transport uses - no second
   // timer, and no second seek path. Deliberately inert while paused: pausing
   // mid-loop must neither cancel the loop nor wrap it.
   function checkLoop() {
@@ -2761,7 +2761,7 @@
     if (!cues.length) {
       const empty = document.createElement('div');
       empty.className = 'cue-empty';
-      empty.textContent = 'No cues yet — press M while watching to drop one.';
+      empty.textContent = 'No cues yet - press M while watching to drop one.';
       cuesListEl.appendChild(empty);
     }
 
@@ -2781,7 +2781,7 @@
       time.addEventListener('click', () => seekToCue(index));
       row.appendChild(time);
 
-      // Notes are edited in place and never block placement — typing here only
+      // Notes are edited in place and never block placement - typing here only
       // repaints the pins, so the field keeps focus while you write.
       const note = document.createElement('input');
       note.className = 'cue-note';
@@ -2838,13 +2838,13 @@
     refreshCommands();
   }
 
-  // `MM:SS — note`, one line per cue. This exact shape is the point: it pastes
+  // `MM:SS - note`, one line per cue. This exact shape is the point: it pastes
   // straight into a YouTube description as chapter markers.
   function cuesAsText() {
-    // A cue with no note emits just the timestamp — the brief's `MM:SS — note`
+    // A cue with no note emits just the timestamp - the brief's `MM:SS - note`
     // shape with an empty note would leave a dangling separator on every line
     // you'd then have to clean out of a YouTube description by hand.
-    return cues.map((c) => (c.note ? `${formatTime(c.t)} — ${c.note}` : formatTime(c.t))).join('\n');
+    return cues.map((c) => (c.note ? `${formatTime(c.t)} - ${c.note}` : formatTime(c.t))).join('\n');
   }
 
   // Export always puts the text on screen, selected, and only *then* tries the
@@ -2866,7 +2866,7 @@
     } catch (err) {
       copied = false;
     }
-    button.textContent = copied ? 'Copied ✓' : 'Selected — Ctrl+C';
+    button.textContent = copied ? 'Copied ✓' : 'Selected - Ctrl+C';
     setTimeout(() => {
       button.textContent = 'Copy as text';
     }, 2000);
@@ -2886,10 +2886,10 @@
   }
 
   // The client silently drops a "paused: false" write that arrives while it's still settling
-  // from a seek — confirmed directly: the unpause response itself came back still paused. Wait
+  // from a seek - confirmed directly: the unpause response itself came back still paused. Wait
   // for the polled `seeking` flag to clear before sending it.
   async function waitForSeekSettled(maxWaitMs = 1500) {
-    // Fetches fresh state directly rather than reading lastPolled — the passive WS broadcast
+    // Fetches fresh state directly rather than reading lastPolled - the passive WS broadcast
     // lags just enough that lastPolled.seeking can still show the stale pre-seek value here.
     const start = Date.now();
     while (Date.now() - start < maxWaitMs) {
@@ -2924,7 +2924,7 @@
   }
 
   async function requestSeek(target, options = {}) {
-    // Any seek that isn't cue navigation breaks the cue cursor — the user has
+    // Any seek that isn't cue navigation breaks the cue cursor - the user has
     // moved somewhere of their own accord, so N should re-derive from position.
     if (!options.keepCueCursor) activeCueIndex = null;
 
@@ -3066,7 +3066,7 @@
 
   // --- Buttons ---
 
-  // Routed through the command table like everything else — it predates the
+  // Routed through the command table like everything else - it predates the
   // table and calling togglePause() directly would be the one action with two
   // codepaths.
   pauseBtn.addEventListener('click', () => runCommand('playPause'));
@@ -3083,7 +3083,7 @@
 
   // The single definition of every action the panel can perform. Buttons and
   // hotkeys both dispatch through here, so there is no second codepath that can
-  // drift — and `enabled`/`active` give one place to answer "can this run right
+  // drift - and `enabled`/`active` give one place to answer "can this run right
   // now" and "does this button look on".
   function seekBy(delta) {
     requestSeek(getDisplayTime() + delta);
@@ -3288,19 +3288,19 @@
         clearEventsDisplay();
         clearCuesDisplay();
         gameModeKnown = false;
-        gameModeEl.textContent = '—';
+        gameModeEl.textContent = '-';
         lastProcessId = null;
       }
     };
 
     ws.onclose = () => {
-      setState('helper-down', 'Helper unreachable — retrying…');
+      setState('helper-down', 'Helper unreachable - retrying…');
       clearTransportDisplay();
       clearRosterDisplay();
       clearEventsDisplay();
       clearCuesDisplay();
       gameModeKnown = false;
-      gameModeEl.textContent = '—';
+      gameModeEl.textContent = '-';
       lastProcessId = null;
       reconnectTimer = setTimeout(connect, 1000);
     };
@@ -3312,8 +3312,8 @@
 
   // Clustering is computed in pixels, so the markers are only correct for the
   // width they were measured at. A window resize listener misses the cases that
-  // actually bite — the panel laid out at ~0px in a background tab, or the
-  // events dropdown changing the track's share of the row — so watch the track
+  // actually bite - the panel laid out at ~0px in a background tab, or the
+  // events dropdown changing the track's share of the row - so watch the track
   // itself. Markers don't affect the track's box, so this can't feed back.
   function remeasureMarkers() {
     if (lastPolled.length <= 0) return;

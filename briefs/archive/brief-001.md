@@ -13,7 +13,7 @@ depends_on: []
 ## Problem Statement
 
 The LoL Replay API is HTTPS on `127.0.0.1:2999` with a Riot self-signed cert and
-no CORS headers. A browser page cannot call it — the fetch fails on cert
+no CORS headers. A browser page cannot call it - the fetch fails on cert
 validation, and would fail on origin policy even if it didn't. Every later brief
 depends on solving this once. Nothing else can be built until a page served in
 Chrome can read and write replay state.
@@ -38,12 +38,12 @@ hour. Prove the connection with curl first, then write code.
 - Verify the API by hand before writing the helper:
   `curl -k https://127.0.0.1:2999/replay/game`
 - Helper serves the panel **and** proxies the API from the same origin. Do not
-  try to make the browser talk to :2999 directly — that is the whole problem.
+  try to make the browser talk to :2999 directly - that is the whole problem.
 - `rejectUnauthorized: false` on the outbound https agent.
 - Proxy passes through GET and POST, preserving JSON bodies and status codes.
 - A visible connection state in the UI: connected / no replay / helper down.
   These three fail differently and must look different.
-- Polling loop that survives the replay client not running — no unhandled
+- Polling loop that survives the replay client not running - no unhandled
   rejections, no console spam, no crash.
 
 ## Notes
@@ -62,7 +62,7 @@ curl -k https://127.0.0.1:2999/replay/game
 ```
 
 Expected: JSON with `processID`, `gameMode`, `length`. If this 404s or hangs, stop
-and fix it — no amount of code works around it.
+and fix it - no amount of code works around it.
 
 **Read the real spec.** The client generates its own OpenAPI spec at
 `https://127.0.0.1:2999/docs`. Field names in these briefs are from memory and may
@@ -88,7 +88,7 @@ app.use('/api', async (req, res) => {
 });
 ```
 
-Panel then calls `/api/replay/playback` — same origin, no CORS, no cert prompt.
+Panel then calls `/api/replay/playback` - same origin, no CORS, no cert prompt.
 
 **Endpoints this brief touches:**
 
@@ -99,11 +99,11 @@ Panel then calls `/api/replay/playback` — same origin, no CORS, no cert prompt
 **Polling.** 10 Hz on `/replay/playback` is fine and is what makes the UI feel
 live. Use `setInterval`, but guard against overlapping requests if the client
 stalls. A plain WebSocket push from helper to browser is nicer than browser-side
-polling and worth doing now — later briefs all want it.
+polling and worth doing now - later briefs all want it.
 
 **Styling.** Dark. This sits next to a game on a second monitor in a dim room; a
 white panel will blind you and bleed light onto your face if you're on camera.
-Large hit targets — you'll be clicking without looking while talking.
+Large hit targets - you'll be clicking without looking while talking.
 
 **Out of scope for this brief:** scrubbing, camera, players, HUD toggles. One
 number updating on screen and one speed change proves the whole pipeline. Stop

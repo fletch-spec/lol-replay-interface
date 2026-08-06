@@ -200,7 +200,7 @@ async function pollPlayback() {
 setInterval(pollPlayback, POLL_INTERVAL_MS);
 pollPlayback();
 
-// Roster + camera lock state — narration reference, not transport, so 1Hz is plenty.
+// Roster + camera lock state - narration reference, not transport, so 1Hz is plenty.
 let rosterPollInFlight = false;
 
 async function pollRoster() {
@@ -216,7 +216,7 @@ async function pollRoster() {
     broadcast({
       type: 'roster',
       players,
-      // Whole render object — the HUD toggles and camera presets need to
+      // Whole render object - the HUD toggles and camera presets need to
       // reflect real client state, and it's already being fetched here.
       render,
       camera: {
@@ -230,7 +230,7 @@ async function pollRoster() {
     });
     broadcast({ type: 'events', events: eventdata.Events || [], processID: game.processID });
   } catch (err) {
-    // Roster is reference data — a miss here isn't worth spamming the console.
+    // Roster is reference data - a miss here isn't worth spamming the console.
   } finally {
     rosterPollInFlight = false;
   }
@@ -239,7 +239,7 @@ async function pollRoster() {
 setInterval(pollRoster, ROSTER_POLL_INTERVAL_MS);
 
 wss.on('connection', (ws) => {
-  ws.on('error', () => {}); // swallow — client disconnects don't need to crash the helper
+  ws.on('error', () => {}); // swallow - client disconnects don't need to crash the helper
 });
 
 server.listen(PORT, () => {

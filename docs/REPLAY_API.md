@@ -1,4 +1,4 @@
-# Replay API — hard-won notes
+# Replay API - hard-won notes
 
 Things about the League replay API (`https://127.0.0.1:2999`) that cost real
 time to discover, kept because the obvious reading of the docs is wrong for most
@@ -13,7 +13,7 @@ serialises as an **empty enum** in swagger, while `/Help` names all five values
 with descriptions. This is what finally cracked the camera problem after three
 briefs of black-box guessing.
 
-The generated `/docs` HTML page 404s on curl — fetch `/Help` or the swagger JSON
+The generated `/docs` HTML page 404s on curl - fetch `/Help` or the swagger JSON
 directly.
 
 ## Partial POSTs work, and failures are silent
@@ -24,12 +24,12 @@ changed exactly **1 of 66 fields**. No read-modify-write needed.
 
 But **unknown field names return HTTP 200 and are silently ignored.** A
 deliberate nonsense field and a plausible-but-nonexistent one behave identically,
-and neither appears in a subsequent GET. A status code proves nothing here —
+and neither appears in a subsequent GET. A status code proves nothing here -
 verify writes by reading the field back.
 
 ## Camera
 
-### Follow-cam — one request
+### Follow-cam - one request
 
 ```json
 POST /replay/render
@@ -71,7 +71,7 @@ Treat as unusable, not merely risky. `fps` is safe.
 
 ### Aiming is empirical
 
-Yaw's world direction isn't documented and can't be read back — the API reports
+Yaw's world direction isn't documented and can't be read back - the API reports
 the rotation you *set*, never where the camera is actually looking. For a fixed
 offset the required aim is a constant (the direction to the champion is always
 −offset), so it's set once rather than recomputed.
@@ -93,7 +93,7 @@ It reads back correctly for a few seconds after being set, then goes empty on it
 own with no request. Consequences:
 
 - Send `selectionName` in **every** camera POST. A later POST of
-  `selectionOffset` *without* it freezes the follow — there's nothing left to
+  `selectionOffset` *without* it freezes the follow - there's nothing left to
   attach to.
 - Don't drive UI state from it. An indicator polling `selectionName` drops out
   spontaneously while the camera is still very much locked.
@@ -103,7 +103,7 @@ own with no request. Consequences:
 ### The in-game camera mode resets yours
 
 Picking "Directed Camera" from the client's own dropdown, or bumping the screen
-edge (which flips it to manual), puts `cameraMode` back to `top` — and then every
+edge (which flips it to manual), puts `cameraMode` back to `top` - and then every
 camera field goes inert again. Send `cameraMode` with every camera write rather
 than setting it once.
 
@@ -123,7 +123,7 @@ guardrail and are **untested**.
 ### `EventID` is not stable across seeks
 
 The client reassigns a new `EventID` to the same real event every time playback
-re-passes that point in game-time — the same kill appeared under four different
+re-passes that point in game-time - the same kill appeared under four different
 IDs after repeated seeking. Deduplicate on a content fingerprint (event name +
 bucketed time + killer/victim), never on `EventID`.
 
@@ -136,24 +136,24 @@ populate (a `GameEnd` event is the completion signal), and seeking back.
 ### Structure IDs
 
 `Turret_TChaos_L2_P3_2521511112_0`. Only the team segment (`TOrder`/`TChaos`) is
-safe to read — the `L`/`P` numbers have no documented lane mapping, and guessing
+safe to read - the `L`/`P` numbers have no documented lane mapping, and guessing
 "bot outer" from them prints confident nonsense.
 
 ## No stable game identifier exists
 
 `/replay/game` returns only `processID`, an OS process id that changes every
-client launch. No path in the spec carries a match ID or the replay filename —
+client launch. No path in the spec carries a match ID or the replay filename -
 all 30 checked. Anything persisting per-replay has to use a composite; this
 project uses `gameMode` + `length`.
 
-`gameMode` is **not** in the Replay API at all — it's on
+`gameMode` is **not** in the Replay API at all - it's on
 `/liveclientdata/gamestats`, along with `mapName`, which is what camera presets
 key by since world coordinates don't transfer between maps.
 
 ## Synthetic input is blocked
 
 Spectator hotkeys (1-5, Q/W/E/R/T) cannot be driven. PostMessage, SendInput
-keyboard and SendInput mouse were each tested with confirmed window focus — zero
+keyboard and SendInput mouse were each tested with confirmed window focus - zero
 effect, almost certainly Vanguard. Don't re-attempt it; use the API instead.
 
 ## Champion name gotcha
@@ -164,6 +164,6 @@ checking whether Elise, Nidalee, Jayce and Karma behave similarly.
 
 ## Reference implementation
 
-<https://github.com/RiotGames/leaguedirector> — Riot's own open-source tool
+<https://github.com/RiotGames/leaguedirector> - Riot's own open-source tool
 against this exact API. Reading it overturned two confident conclusions reached
 from black-box testing alone. Check it before deciding something is impossible.

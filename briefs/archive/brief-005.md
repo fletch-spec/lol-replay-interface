@@ -15,13 +15,13 @@ depends_on: [brief-002, brief-004]
 This is the brief the whole project exists for. Narrating a replay live means
 knowing what you're going to say and when, then being able to redo a line without
 losing your place. Right now a fluffed sentence means scrubbing back by hand,
-finding the spot, and rebuilding your mental context — which is why single-pass
+finding the spot, and rebuilding your mental context - which is why single-pass
 voiceover usually gets abandoned for editing in post.
 
 ## Done Looks Like
 
 You can mark a set of timestamps with notes, then walk the replay through them
-one key at a time — each press seeks to the next cue and holds paused, so you
+one key at a time - each press seeks to the next cue and holds paused, so you
 talk, press, talk, press. Setting an A/B loop around a fight replays that section
 continuously so a line can be re-recorded as many times as needed without
 touching the scrub bar. Cues survive closing the browser and are tied to the
@@ -37,11 +37,11 @@ one key.
 ## Can't Skip
 
 - One-key cue placement at current playback position. No dialog, no confirm.
-- Note text is optional and editable *after* placement — never blocking.
+- Note text is optional and editable *after* placement - never blocking.
 - Next/previous cue navigation on single keys, seeking and holding paused.
 - A/B loop: set A, set B, toggle loop. Loop must survive being paused mid-loop.
 - Persistence to `localStorage` keyed by game ID, surviving browser restart.
-- Export cues as plain text with timestamps — this becomes the script and the
+- Export cues as plain text with timestamps - this becomes the script and the
   video description/chapter markers.
 - Cues render as distinct pins on the scrub track, visually different from
   brief 004's event markers. Two marker types on one bar must not be confusable.
@@ -61,7 +61,7 @@ Esc       clear loop
 **The core loop this enables:**
 
 1. Watch through once at 2×, pressing M whenever something's worth mentioning
-2. Go back, add notes to the cues — "explain ward timing", "this is the mistake"
+2. Go back, add notes to the cues - "explain ward timing", "this is the mistake"
 3. Start recording. Press N, talk, press N, talk.
 4. Fluff a line → `[` `]` around it, `L`, re-record until it's right, `Esc`
 
@@ -76,7 +76,7 @@ exact moment. You want the two seconds before the fight to set it up verbally,
 not to arrive mid-explosion. Make the lead-in configurable but default it to 2s.
 
 **Loop mechanics.** Poll playback; when `time >= B`, seek to A. The ~150ms seek
-lag means the loop point is audible/visible as a small jump — acceptable, since
+lag means the loop point is audible/visible as a small jump - acceptable, since
 you're re-recording audio over it, not using the loop in the final cut. Don't
 over-engineer smoothness here.
 
@@ -88,10 +88,10 @@ over-engineer smoothness here.
 ```
 
 Game ID from `/replay/game` or the replay filename. If neither is stable across
-sessions, fall back to `length` + `gameMode` as a composite key — imperfect but
+sessions, fall back to `length` + `gameMode` as a composite key - imperfect but
 good enough to distinguish replays in practice.
 
-**Export format.** Plain text, one line per cue, `MM:SS — note`. Directly
+**Export format.** Plain text, one line per cue, `MM:SS - note`. Directly
 pasteable as YouTube chapters. Do not invent a format; this is the one that gets
 used.
 
@@ -105,7 +105,7 @@ live replay (`CLASSIC:1516`), not just read back from code.
 
 **The game ID in the Notes doesn't exist.** The brief says "Game ID from
 `/replay/game` or the replay filename". `/replay/game` returns exactly one
-field — `processID` — confirmed against the live client *and* the `Game` schema
+field - `processID` - confirmed against the live client *and* the `Game` schema
 in `/swagger/v3/openapi.json`. It's an OS process id, new on every client
 launch, so cues keyed by it would vanish whenever League restarted. No path in
 the whole spec (all 30 checked) carries a match ID or the replay filename
@@ -117,7 +117,7 @@ moved from `CLASSIC:2196` to `CLASSIC:1516` on its own, with the right cue set
 following it.
 
 **Cue navigation steps a cursor, not a time search.** The obvious
-implementation — "next cue after current time" — is wrong given the lead-in.
+implementation - "next cue after current time" - is wrong given the lead-in.
 After N lands you at `cue.t - 2`, the playhead is *before* the cue you just
 navigated to, so the next N finds the same cue again and you never advance.
 Fixed with an `activeCueIndex` cursor that steps, and that any non-cue seek
@@ -125,22 +125,22 @@ clears so it re-derives from wherever you scrubbed to.
 
 **No second seek path** (the escalation the passoff flagged). Cue jumps and
 loop wraps both go through the existing `requestSeek` → `doSeek` → `withMutex`
-chain. Holding paused on arrival needed one change *inside* `doSeek` — a
-`holdPaused` flag that skips the resume — rather than a pause write afterwards,
+chain. Holding paused on arrival needed one change *inside* `doSeek` - a
+`holdPaused` flag that skips the resume - rather than a pause write afterwards,
 which would have been a second trip through the mutex and could interleave with
 the seek's own resume. The existing coalescing already covers rapid N presses
 and loop wraps landing on a seek still in flight.
 
 **Loop mechanics.** Runs off the same ~10Hz playback push the transport already
-consumes — no second timer. Inert while paused, so pausing mid-loop neither
+consumes - no second timer. Inert while paused, so pausing mid-loop neither
 cancels nor wraps it; verified by pausing inside a loop for 3s (zero drift,
 `loopEnabled` still true) and confirming it wrapped again on resume. A and B are
 stored as pressed and the range is derived, so setting them in either order
 works.
 
-**Export changed shape slightly.** Format is the brief's `MM:SS — note`, except
-a cue with no note emits just the timestamp — otherwise every unnannotated cue
-lands in your YouTube description as a dangling `4:59 —` to clean up by hand.
+**Export changed shape slightly.** Format is the brief's `MM:SS - note`, except
+a cue with no note emits just the timestamp - otherwise every unnannotated cue
+lands in your YouTube description as a dangling `4:59 -` to clean up by hand.
 Export also always renders the text into a selected textarea *and* tries the
 clipboard, rather than copying silently: `navigator.clipboard.writeText` needs
 transient user activation and can be refused for reasons the page can't
@@ -153,10 +153,10 @@ that ran 206→212→wrap→200 without ever passing B; Esc clears; notes edit i
 place without losing focus and survive a full browser reload; shift+click on an
 event marker places a cue at that event. Cue pins render below the track in
 teal with round heads (square when a note exists), against brief 004's event
-markers above the track — different side, shape and colour.
+markers above the track - different side, shape and colour.
 
 **Not done:** the cue lead-in is fixed at the 2s default. The brief says "make
-the lead-in configurable" — it's stored per-cue (`lead` in the persisted shape,
+the lead-in configurable" - it's stored per-cue (`lead` in the persisted shape,
 honoured on navigation) but there is no UI to change it. A per-cue lead field
 belongs next to the note; it was the one part with no obvious one-key
 interaction, and guessing at it seemed worse than leaving the hook in place.
