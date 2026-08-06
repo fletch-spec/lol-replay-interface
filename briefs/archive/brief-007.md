@@ -1,8 +1,8 @@
 ---
 id: brief-007
-state: ready
+state: complete
 created: 2026-08-05
-updated: 2026-08-05
+updated: 2026-08-06
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: [brief-004, brief-005]
@@ -146,3 +146,50 @@ than a judgement call.
 **Out of scope:** new replay-API functionality of any kind. This brief adds no
 capability the panel doesn't already have — it makes what exists reachable and
 readable. If you find yourself reading the swagger spec, you've drifted.
+
+## Outcome (2026-08-06)
+
+Shipped. No new API surface was touched, as instructed.
+
+**The command table came first**, since drift was the risk worth designing
+against rather than testing for afterwards. `COMMANDS` holds one entry per
+action with `run`, plus optional `enabled` and `active` predicates; both the
+`keydown` handler and every button dispatch through `runCommand(id)`. The
+predicates turned out to earn their place twice over — they drive disabled
+states (next-cue with no cues, toggle-loop with no A/B) and the "looks on"
+state from the same declaration, so there is nowhere for the two to disagree.
+
+Proof it holds, from live testing: arming the loop with the **button** made the
+button render as on, then disarming with the **`L` hotkey** cleared that same
+visual state. Placing a cue with the button and then with `M` produced two cues.
+The Pause button predated the table and was still calling `togglePause()`
+directly — that was the one action with two codepaths, now routed through
+`runCommand('playPause')` and verified toggling both ways.
+
+**Nine controls, three groups, no toolbar.** Transport card takes seek/pause/
+speeds/event-stepping; a new cue card takes place-cue, cue stepping, and the
+four loop controls. Every button carries its hotkey inline (`+ Cue M`,
+`Loop L`), which replaced both lines of the old hint text — the accelerators
+now teach themselves instead of being listed in a legend nobody reads.
+
+**The floating lists are gone.** Events and cues are now one in-flow 330px rail
+with tabs, verified `position: static` and not overlapping the track. This was
+the layout's real problem: at 1400px the dropdown opened directly over the scrub
+bar you were about to click.
+
+**Three folded-in bugs, all fixed.** `.speed-btn.primary` now marks the
+recommended speed with a dot instead of an accent border, so only one speed
+button can look active. The scrub handle pulses while `seekRunning`, so a seek
+in flight no longer looks settled. Empty marker lanes are collapsed rather than
+reserved — replays with no dragon/baron events were rendering an empty band of
+gutter that read as breakage.
+
+**Layout result:** 1400×887 in a 1919×905 viewport, no overflow, 982px of scrub
+track.
+
+**Not done:** the legend under the track was left in place. The brief asks to
+"consider whether the legend earns permanent space once cue and loop controls
+are visible and self-labelling" — the loop and cue *controls* are now
+self-labelling, but the marker *colours* on the track still aren't explained
+anywhere else, so removing it would cost more than it saves. Worth revisiting if
+the track ever gets marker labels of its own.

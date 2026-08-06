@@ -16,9 +16,12 @@ Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
 
 ## Now
 
-- Briefs 001–006 complete. **007 (clickable controls + layout review) is the
-  only one left**, and it now has more to lay out than when it was written:
-  camera distance, HUD toggles, FOV and camera presets all landed after it.
+- **All 7 briefs complete; `briefs/ready/` is empty.** The panel does what the
+  project set out to do, including the follow-cam that briefs 003–005 were
+  written around the absence of. Open items live in
+  [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) — the two worth a next brief are depth of
+  field / fog (deferred from 006) and `cameraLockX/Y/Z`, still untested, which
+  is the guard against mouse-look disturbing a locked camera mid-narration.
   Briefs are started
   **manually, one at a time** — nothing auto-advances. See
   [briefs/brief_log.md](./briefs/brief_log.md).
@@ -40,7 +43,7 @@ Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
 | 004 | Event timeline | complete | 002 |
 | 005 | Cue points + A/B loop | complete | 002, 004 |
 | 006 | HUD toggles + camera presets | complete | 001 |
-| 007 | Clickable controls + layout review | ready | 004, 005 |
+| 007 | Clickable controls + layout review | complete | 004, 005 |
 
 Briefs 002 and 003 both only need 001, so either can go second. 006 is
 independent of the timeline work and can be pulled forward if you want a
@@ -79,7 +82,7 @@ No brief starts itself. Nothing in the queue runs without step 1.
 
 ## Stats
 
-- Briefs complete: 6 / 7
+- Briefs complete: 7 / 7 — queue empty
 - First working build: 2026-08-04
 - First recorded VO using the panel: TBD
 
