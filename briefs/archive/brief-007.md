@@ -67,7 +67,7 @@ subtly different from `M`.
 ## Notes
 
 **Why the hotkeys aren't enough, specifically.** This is already logged in
-`KNOWN_ISSUES.md` as "keyboard shortcuts die silently when the panel loses
+`docs/REPLAY_API.md` as "keyboard shortcuts die silently when the panel loses
 focus", and it's the same root cause behind the Stream Deck idea in the project
 doc. The panel is a second-monitor instrument played while another window has
 focus. Treat click as the primary input and the keyboard as the accelerator for
@@ -107,7 +107,7 @@ time bubble, time readout, legend. That happened one brief at a time and has
 never been designed as a whole. Consider whether the legend earns permanent
 space once cue and loop controls are visible and self-labelling.
 
-**Known layout bugs to fold in** (all in `KNOWN_ISSUES.md`): `.speed-btn.primary`
+**Known layout bugs to fold in** (all in `docs/REPLAY_API.md`): `.speed-btn.primary`
 draws an accent border while `.active` draws an accent fill, so two speed
 buttons read as selected at once; seeks lag 100–200ms with no in-flight
 indication, which invites a second click; the objective marker lane renders as

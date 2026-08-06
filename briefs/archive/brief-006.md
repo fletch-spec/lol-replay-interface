@@ -91,7 +91,7 @@ sizing this.
 are now out of date:
 
 - **Follow-cam works.** Solved outside the brief queue; full recipe in
-  `KNOWN_ISSUES.md`. One POST: `cameraMode:"fps"` + `selectionName` +
+  `docs/REPLAY_API.md`. One POST: `cameraMode:"fps"` + `selectionName` +
   `cameraAttached:true` + `selectionOffset` + `cameraRotation`. So presets are
   *not* the only camera control, and "lock camera to champion" — brief 003's
   original goal — is now a one-liner this brief should wire into the roster.
@@ -175,7 +175,7 @@ Applying a preset sends `cameraMode: "fps"` and `cameraAttached: false` —
 point rather than a follow.
 
 **The camera premise in this brief was already obsolete when it started.**
-Follow-cam was solved outside the queue (see `KNOWN_ISSUES.md`), so presets are
+Follow-cam was solved outside the queue (see `docs/REPLAY_API.md`), so presets are
 a secondary tool, as the brief's own "Interaction with brief 003" note
 anticipated for the case where the bridge worked. `cameraMode: "tps"` was never
 sent — it closes the game, reproduced twice.

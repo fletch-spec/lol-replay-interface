@@ -19,19 +19,21 @@ Related: [obs_stream_setup](../obs_stream_setup.md) (capture + editing side)
 - **All 7 briefs complete; `briefs/ready/` is empty.** The panel does what the
   project set out to do, including the follow-cam that briefs 003–005 were
   written around the absence of. Open items live in
-  [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) — the two worth a next brief are depth of
-  field / fog (deferred from 006) and `cameraLockX/Y/Z`, still untested, which
-  is the guard against mouse-look disturbing a locked camera mid-narration.
+  [GitHub Issues](https://github.com/fletch-spec/lol-replay-interface/issues) —
+  the two worth a next brief are depth of field / fog (deferred from 006) and
+  `cameraLockX/Y/Z`, still untested, which is the guard against mouse-look
+  disturbing a locked camera mid-narration.
   Briefs are started
   **manually, one at a time** — nothing auto-advances. See
   [briefs/brief_log.md](./briefs/brief_log.md).
 - Timeline fidelity pass (phases 1–2 of
   [ui_polish_plan.md](./ui_polish_plan.md)) landed 2026-08-05, outside the
   brief queue. Phases 3–4 still open.
-- Open problems live in [KNOWN_ISSUES.md](./KNOWN_ISSUES.md). The Notes section
-  below stays the reference for *confirmed API and client behaviour*; that file
-  tracks what's currently broken or unverified. One copy each — the issues file
-  points here rather than restating.
+- Open problems live in
+  [GitHub Issues](https://github.com/fletch-spec/lol-replay-interface/issues).
+  Durable API behaviour lives in [docs/REPLAY_API.md](./docs/REPLAY_API.md).
+  One copy each — issues describe what's broken, the API doc describes what's
+  true.
 
 ## Brief Queue
 
@@ -100,9 +102,8 @@ No brief starts itself. Nothing in the queue runs without step 1.
   load-bearing part is `fps`: in the default `top` mode the camera is on the
   game's directed rails and *every* camera field is inert, which is why three
   briefs concluded the API couldn't do this. **`cameraMode: "tps"` closes the
-  game — reproduced twice, do not send it.** Full recipe, framing maths and the
-  two wrong conclusions that preceded it are in
-  [KNOWN_ISSUES.md](./KNOWN_ISSUES.md).
+  game — reproduced twice, do not send it.** Full recipe and framing maths in
+  [docs/REPLAY_API.md](./docs/REPLAY_API.md).
 - **Riot ships the reference implementation:
   <https://github.com/RiotGames/leaguedirector>.** Open source, drives this
   exact API. Its README documents "Attach camera to champion or minion" as a
