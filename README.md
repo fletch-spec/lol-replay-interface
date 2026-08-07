@@ -9,8 +9,8 @@ stats tool. If a feature doesn't help someone talk over a replay in real time,
 it's out.
 
 ![The panel: status bar with camera distance and cinematic controls, both team
-rosters, transport controls, the scrub bar with event markers, and the event
-list](docs/panel.png)
+rosters, transport controls, the scrub bar with event markers, the event list,
+and the Cues card below it](docs/panel.png)
 
 *Summoner names are replaced with placeholders in this screenshot.*
 

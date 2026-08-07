@@ -78,9 +78,24 @@ function normalizeChampionKey(name) {
   return String(name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+// Some champions report a transformed name via /liveclientdata/playerlist's
+// championName that isn't a Data Dragon id - keyed post-normalization, so
+// "Mega Gnar" -> "megagnar". Only entries actually observed live belong here
+// (brief 011): a wrong guess maps a champion to the wrong portrait silently,
+// which is worse than a 404. Confirmed 2026-08-07 by sweeping a full replay's
+// playerlist across its timeline and diffing championName against the roster -
+// Kayn (present, never transformed to Rhaast/Assassin this game) and every
+// other champion known to change form (Elise, Nidalee, Jayce, Karma, Shyvana,
+// Sion, Kled, Anivia, Maokai, Zac, Aphelios) were absent from that replay and
+// are deliberately left out rather than guessed.
+const CHAMPION_NAME_ALIASES = new Map([
+  [normalizeChampionKey('Mega Gnar'), 'Gnar'],
+]);
+
 // Maps a normalized champion name/id to its Data Dragon id (the "MonkeyKing" vs "Wukong" trap).
 let championKeyMap = new Map();
 let ddragonVersion = null;
+const loggedUnresolvedChampions = new Set();
 
 async function loadChampionMap() {
   try {
@@ -105,8 +120,19 @@ fs.mkdirSync(PORTRAIT_CACHE_DIR, { recursive: true });
 loadChampionMap();
 
 async function servePortrait(req, res) {
-  const ddragonId = championKeyMap.get(normalizeChampionKey(req.params.champion));
-  if (!ddragonId) return res.status(404).end();
+  const key = normalizeChampionKey(req.params.champion);
+  const resolvedName = CHAMPION_NAME_ALIASES.get(key) || req.params.champion;
+  const ddragonId = championKeyMap.get(normalizeChampionKey(resolvedName));
+  if (!ddragonId) {
+    // A champion released after the alias table was last checked 404s forever
+    // otherwise - log it once so it's discoverable without spamming the
+    // console every second the roster re-renders.
+    if (!loggedUnresolvedChampions.has(key)) {
+      loggedUnresolvedChampions.add(key);
+      console.log(`[portraits] unresolved champion name: "${req.params.champion}"`);
+    }
+    return res.status(404).end();
+  }
 
   const cachePath = path.join(PORTRAIT_CACHE_DIR, `${ddragonId}.png`);
   if (!fs.existsSync(cachePath)) {
