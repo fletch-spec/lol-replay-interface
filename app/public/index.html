@@ -555,11 +555,15 @@
   /* Hover card - replaces native title tooltips. For a cluster it lists every
      event, each seeking to its own timestamp: before this, only the first
      event in a cluster was reachable at all. */
+  /* position: fixed so .transport.card's overflow: hidden (load-bearing for
+     its rounded corners) can't clip it - the containing-block exemption was
+     checked live (no ancestor sets transform/filter/perspective/will-change/
+     contain) before relying on it. top/bottom/left are computed per-open in
+     openHoverCard(), not fixed values - see the comment there for why. */
   .hover-card {
-    position: absolute;
+    position: fixed;
     left: 0;
-    top: 2px;
-    transform: translate(-50%, -100%);
+    transform: translateX(-50%);
     z-index: 40;
     display: none;
     min-width: 210px;
@@ -1368,7 +1372,6 @@
   const speedChipEl = document.getElementById('speedChip');
 
   const transportEl = document.getElementById('transport');
-  const scrubAreaEl = document.getElementById('scrubArea');
   const scrubTrack = document.getElementById('scrubTrack');
   const scrubFill = document.getElementById('scrubFill');
   const scrubTicksEl = document.getElementById('scrubTicks');
@@ -2430,24 +2433,46 @@
 
   // Shared by event markers and cue pins - both anchor a card to a position on
   // the track, they just build different rows.
-  function openHoverCard(pxX, rows, anchorEl) {
+  // position: fixed, so coordinates are viewport-relative and computed from
+  // the anchor's own rect, not from a pixel offset inside .scrub-area (which
+  // stopped being the containing block once the card left that clipping
+  // context). Markers sit in the gutter above the track and grow further up;
+  // cue pins sit in the strip below and grow further down - growing toward
+  // the track in either case would cover it, breaking the rule briefs 007,
+  // 013 and 014 all keep. Neither direction ever flips to the other; if the
+  // card doesn't fit, it clamps at the viewport edge and scrolls internally
+  // (max-height set below), same as the old behaviour's spirit.
+  function openHoverCard(anchorEl, rows, growUp) {
     clearTimeout(hoverHideTimer);
     if (hoverAnchorEl && hoverAnchorEl !== anchorEl) hoverAnchorEl.classList.remove('hot');
     hoverAnchorEl = anchorEl;
     if (anchorEl) anchorEl.classList.add('hot');
 
+    // Fill and reveal before measuring - a hidden or empty card measures
+    // zero, and the previous card's width would leak through otherwise.
     hoverCardEl.replaceChildren(...rows);
     hoverCardEl.classList.add('visible');
 
-    const areaWidth = scrubAreaEl.getBoundingClientRect().width;
+    const anchorRect = anchorEl.getBoundingClientRect();
     const cardWidth = hoverCardEl.getBoundingClientRect().width;
     const half = cardWidth / 2;
-    hoverCardEl.style.left = `${clamp(pxX, half + 2, Math.max(half + 2, areaWidth - half - 2))}px`;
+    const centerX = anchorRect.left + anchorRect.width / 2;
+    hoverCardEl.style.left = `${clamp(centerX, half + 2, Math.max(half + 2, window.innerWidth - half - 2))}px`;
+
+    if (growUp) {
+      hoverCardEl.style.top = 'auto';
+      hoverCardEl.style.bottom = `${window.innerHeight - anchorRect.top + 2}px`;
+      hoverCardEl.style.maxHeight = `${Math.max(60, Math.min(240, anchorRect.top - 6))}px`;
+    } else {
+      hoverCardEl.style.bottom = 'auto';
+      hoverCardEl.style.top = `${anchorRect.bottom + 2}px`;
+      hoverCardEl.style.maxHeight = `${Math.max(60, Math.min(240, window.innerHeight - anchorRect.bottom - 6))}px`;
+    }
   }
 
   function showHoverCard(cluster) {
     hoverCluster = cluster;
-    openHoverCard(cluster.pxX, cluster.events.map(buildHoverRow), cluster.el);
+    openHoverCard(cluster.el, cluster.events.map(buildHoverRow), true);
   }
 
   function scheduleHideHoverCard() {
@@ -2466,6 +2491,12 @@
 
   hoverCardEl.addEventListener('mouseenter', () => clearTimeout(hoverHideTimer));
   hoverCardEl.addEventListener('mouseleave', scheduleHideHoverCard);
+
+  // Fixed coordinates are viewport-relative and stale the moment the anchor
+  // moves - hiding is simpler than repositioning and the card is transient
+  // by nature, so there's nothing lost by making the user re-hover.
+  window.addEventListener('scroll', hideHoverCard, true);
+  window.addEventListener('resize', hideHoverCard);
 
   // Wording says what to do, not what's wrong - an unscanned 4-event timeline
   // must not read like a quiet game that genuinely had 4.
@@ -2874,15 +2905,11 @@
       });
       pin.addEventListener('mouseenter', () => {
         hideGhost(); // the pin sits under the track; the ghost line here is just noise
-        openHoverCard(pinPixelX(pin), [buildCueCardRow(cue, index)], pin);
+        openHoverCard(pin, [buildCueCardRow(cue, index)], false);
       });
       pin.addEventListener('mouseleave', scheduleHideHoverCard);
       cuePinsEl.appendChild(pin);
     });
-  }
-
-  function pinPixelX(pin) {
-    return pin.getBoundingClientRect().left + pin.offsetWidth / 2 - scrubTrack.getBoundingClientRect().left;
   }
 
   function buildCueCardRow(cue, index) {

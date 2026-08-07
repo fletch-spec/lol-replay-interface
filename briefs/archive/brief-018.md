@@ -1,8 +1,8 @@
 ---
 id: brief-018
-state: ready
+state: complete
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-08
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: [brief-014]
@@ -237,3 +237,67 @@ brief moves a box; it does not redesign one.
   is written for.
 - **If the fix needs the card to flip below the track** in some case you find,
   stop. Three briefs have kept that rule and breaking it is a project-level call.
+
+## Outcome
+
+**Step 1 (containing-block check) ran live before any code changed**, exactly
+as instructed since it decides the rest of the brief: walked up from
+`#hoverCard` checking every ancestor's `transform`/`filter`/`perspective`/
+`will-change`/`contain` and found nothing (`[]`). The card stays in place as
+`position: fixed`; no move to `document.body` needed.
+
+**Built exactly the decided fix**: `.hover-card` is `position: fixed`
+(`transform: translateX(-50%)` kept for horizontal centring only - a
+transform on the fixed element itself doesn't affect whether *it* escapes
+ancestor clipping, only an ancestor's transform would). `openHoverCard()`
+now takes `(anchorEl, rows, growUp)` instead of `(pxX, rows, anchorEl)` and
+computes `left`/`top or bottom`/`max-height` from `anchorEl.getBoundingClientRect()`
+and `window.innerWidth/innerHeight` directly, replacing the old
+`.scrub-area`-relative pixel math.
+
+**The direction split (markers grow up, cue pins grow down) turned out to be
+load-bearing, not cosmetic** - the brief's own Trap flagged this and it's
+real: a literal "always grow upward from the anchor" would place a cue pin's
+card growing *up over the track itself*, since pins sit below it. Shipped
+`growUp: true` for markers (`bottom` anchored to the anchor's top) and
+`growUp: false` for cue pins (`top` anchored to the anchor's bottom), each
+with its own `max-height` clamped to `min(240, available space in that
+direction)` so a card that doesn't fit scrolls internally at the correct
+viewport edge instead of flipping or overflowing off-screen - the same
+clamp-not-flip spirit as the brief's step 4, applied symmetrically to both
+directions since cue-pin cards can just as easily run out of room below.
+
+**Verified live, numbers not assumed:**
+- Busiest cluster (8 events that session, later 21 in a re-check): card
+  rendered at `max-height: 240px` with `scrollHeight` up to 632px depending on
+  row count, `overlapsTrack: false` every time, fully inside the viewport.
+- Leftmost and rightmost markers on the track: card stayed on-screen at both
+  horizontal extremes (1920px viewport).
+- Cue pin: card grew downward from the pin (`cardRect.top >= pinRect.top`),
+  did not overlap the track.
+- Hover grace: moved off the anchor, `mouseenter` on the card itself, waited
+  200ms (past the 140ms hide timer) - card stayed visible.
+- Click a row: seeks (`lastPolled.time` moved to the row's `EventTime`) and
+  the card hides itself afterward, unchanged existing behaviour.
+- Shift+click a row: places a cue (`cues.length` 1→2) with playback time
+  unchanged, confirmed to the millisecond.
+- `resize` and `scroll` dispatch both hide the card (the chosen "hide, don't
+  reposition" option from step 5, commented in the code).
+- `renderMarkers()`'s existing `hideHoverCard()` call (brief 014's
+  known-annoying-but-intentional behaviour) is untouched - confirmed by
+  reading the function, not reproduced by triggering a live merge.
+
+**Step 3's screenshot requirement could not be met - said so rather than
+skipped silently.** This session's Browser pane does not composite frames
+(`computer` screenshot times out: "the Browser pane is not displayed"), the
+same limitation brief 014 hit. No before/after screenshot exists. In its
+place: the diff touches only `.hover-card`'s own CSS and the hover-positioning
+JS; `.transport.card`'s rules (padding, gap, `overflow: hidden`,
+border-radius, hairlines) have zero changed lines, so "looks the same" is
+true by construction, not by a pixel comparison - flagged as weaker evidence
+than a real screenshot would have been, not represented as equivalent to one.
+
+**Cleanup found in passing**: `pinPixelX()` and the `scrubAreaEl` DOM
+reference both became dead code once position was computed from the anchor's
+own rect and viewport dimensions instead of `.scrub-area`'s. Removed both
+rather than leaving them unused.
