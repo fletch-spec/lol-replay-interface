@@ -2105,13 +2105,42 @@
     return team === 'ORDER' ? 'blue' : 'red';
   }
 
+  // Structure and minion killer IDs observed in the wild (issue #13):
+  // "Turret_TChaos_L1_P0_1017949901_0", "Minion_T100L1S00N0874". Only the
+  // prefix and (for structures) the team segment are read - same "only the
+  // team segment is safe" judgement structureSide() applies below to its own
+  // field. No live replay this session had a TurretKilled/InhibKilled event to
+  // check these prefixes against (see brief 017's Outcome) - they come from
+  // the issue's own pasted real game, not from memory.
+  function engineActorLabel(name) {
+    if (name.startsWith('Turret_') || name.startsWith('Inhib_')) return `a turret${structureSide(name)}`;
+    if (name.startsWith('Minion_')) return 'a minion';
+    return null;
+  }
+
   // Events carry summoner names, which are unreadable at a glance mid-narration
   // - "Rengar killed Lux" lands far faster than "SomeSummoner41 killed xX_Player".
-  // Falls back to the raw name when it doesn't resolve to a champion, which is
-  // what happens for turret and minion killers.
+  // Falls back to the raw name when it doesn't resolve to a champion AND
+  // doesn't match a known engine-ID shape either - that's an unresolved
+  // summoner whose roster entry hasn't loaded yet, which is real information
+  // and stays on screen. Gate on shape, not on resolution failure: a name
+  // isn't guilty just because playerFor() hasn't caught up yet. An underscore
+  // is the one thing every engine ID seen so far has and a summoner name
+  // doesn't, so it's the gate for the shapes this session never saw a live
+  // example of; unresolved shapes log once via the existing loggedUnknownEvents
+  // set and render a fallback, never the raw string.
   function championName(name) {
     const player = playerFor(name);
-    return player && player.champion ? player.champion : name || '';
+    if (player) return player.champion;
+    if (!name) return name || '';
+    const engineLabel = engineActorLabel(name);
+    if (engineLabel) return engineLabel;
+    if (!name.includes('_')) return name;
+    if (!loggedUnknownEvents.has(name)) {
+      loggedUnknownEvents.add(name);
+      console.log(`[events] unresolved engine-ID-shaped name "${name}" - showing as unknown`, name);
+    }
+    return 'something unknown';
   }
 
   // Structure IDs look like `Turret_TChaos_L2_P3_2521511112_0`. Only the team
@@ -2130,11 +2159,13 @@
       case 'ChampionKill':
         return `${championName(event.KillerName)} killed ${championName(event.VictimName)}`;
       case 'Multikill':
-        return `${championName(event.KillerName)} multikill (${event.KillStreak}x)`;
+        // Derived from a ChampionKill row already in the list - drop the
+        // repeated subject and mark it as an annotation, not a peer event.
+        return `★ ${event.KillStreak}x multikill`;
       case 'FirstBlood':
-        return `First Blood - ${championName(event.Recipient)}`;
+        return '★ First Blood';
       case 'Ace':
-        return `Ace - ${championName(event.Acer)}${event.AcingTeam ? ` (${sideName(event.AcingTeam)} team)` : ''}`.trim();
+        return `★ Ace${event.AcingTeam ? ` (${sideName(event.AcingTeam)} team)` : ''}`;
       case 'DragonKill':
         return `Dragon (${event.DragonType || '?'}) - ${championName(event.KillerName)}`;
       case 'BaronKill':
@@ -2146,25 +2177,36 @@
       case 'InhibKilled':
         return `Inhibitor${structureSide(event.InhibKilled)} - ${championName(event.KillerName) || '?'}`;
       case 'FirstBrick':
-        return `First Tower - ${championName(event.KillerName)}`.trim();
+        // Derived from the TurretKilled row already in the list.
+        return '★ First Tower';
       default:
         return event.EventName;
     }
   }
 
-  // Identifies "the same real event" independent of EventID, which the client reassigns
-  // every time replay playback re-passes the point it happened at. 200ms buckets absorb the
-  // few-millisecond jitter observed between re-emitted copies of the same event.
+  // Identifies "the same real event" independent of EventID, which the client
+  // reassigns every time replay playback re-passes the point it happened at.
+  // 2s buckets absorb the jitter observed between re-emitted copies of the
+  // same event, measured up to ~1s (brief 016/017) - a 200ms bucket only
+  // absorbed a "few-millisecond jitter" that was never actually observed and
+  // let a full second of drift produce duplicate rows for the same kill.
+  // Two seconds is safe for a killer/victim pair - the respawn timer makes a
+  // second genuinely distinct kill of the same victim by the same killer
+  // impossible inside that window - but not for Multikill, which fires
+  // repeatedly for the same killer with no victim to tell the copies apart,
+  // so KillStreak is in the tuple specifically to keep a climbing streak's
+  // rows from collapsing into one.
   function eventFingerprint(event) {
     return [
       event.EventName,
-      Math.round(event.EventTime * 5),
+      Math.round(event.EventTime * 0.5),
       event.KillerName || '',
       event.VictimName || '',
       event.Recipient || '',
       event.Acer || '',
       event.TurretKilled || '',
       event.InhibKilled || '',
+      event.KillStreak || '',
     ].join('|');
   }
 

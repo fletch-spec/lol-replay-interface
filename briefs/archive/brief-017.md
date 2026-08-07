@@ -1,8 +1,8 @@
 ---
 id: brief-017
-state: ready
+state: complete
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-08
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: [brief-016]
@@ -266,3 +266,77 @@ Marker colour and shape, the objective/structure taxonomy and the legend (brief
   timestamps** often enough that they do not sit adjacent, the `★` marker is
   solving less than it looks like. Say so - the fix would be pairing logic, which
   this brief deliberately rejected on the evidence available.
+
+## Outcome
+
+**Step 1 could not be run as written.** The loaded replay has zero
+`TurretKilled`/`InhibKilled`/objective events - confirmed independently by
+brief 016's own ground-truth scan (the full 18-27 event game is entirely
+`ChampionKill`/`FirstBlood`/`Multikill`/`Ace`/`GameStart`/`MinionsSpawning`/
+`GameEnd`/`InhibRespawned`). No unresolved killer/victim shape exists to
+collect from a live game this session. Built the resolver against the two
+shapes the issue itself quotes from its own real game
+(`Turret_TChaos_L1_P0_1017949901_0`, `Minion_T100L1S00N0874`) rather than
+inventing anything - that's real evidence, just not observed by this
+session - and added a shape-based catch-all (underscore present, no known
+prefix match) that logs once and falls back to `'something unknown'` rather
+than rendering raw, for a shape neither this brief nor the issue has seen.
+Verified all of it synthetically (injected fake `Turret_`/`Minion_`/unresolved
+-summoner/unknown-shape events and called `describeEvent()` directly) since no
+real example was available:
+`"a turret (red) killed Kayn"`, `"Turret (blue) - a minion"`,
+`"Inhibitor (red) - a minion"`, an unresolved plain summoner name rendered
+as-is (load-bearing case preserved per the brief's own Trap), and a contrived
+`SRU_SomethingWeird_99` correctly logged once and shown as `"something
+unknown"` rather than raw. This is code-path verification, not a live-game
+reproduction, and is weaker evidence than the rest of this Outcome - flagged
+rather than blurred together with what was actually observed live.
+
+**Steps 2, 3, 6, 7 verified live and clean.** A full replay's rendered event
+list has no `_`, no hex, no `TChaos`/`T100` anywhere (there was none to begin
+with, but the resolver is confirmed not to introduce any either). All three
+label surfaces (`renderEventList()`, `buildHoverRow()`,
+`updateEventProgress()`) call `describeEvent()`/`categoryFor()` directly with
+no separate logic - confirmed by reading all three, not assumed.
+
+**Step 3's `★` redesign verified live**, all four derived types: `★ First
+Blood` sits directly under its `ChampionKill` row with no restated name, `★
+2x multikill` appears twice (two separate multikills, correctly not merged
+into each other - see the `KillStreak` fingerprint note below), `★ First
+Tower` renders per the brief's own literal example (not hit live - no
+`FirstBrick` in this replay either - but the code path is identical to
+`FirstBlood`'s, which was hit), `★ Ace (red team)` renders correctly.
+
+**Steps 4-5 (KillStreak, then the 2s bucket) shipped in that order, and the
+result is a real but incomplete fix - said plainly rather than rounded up to
+"done."** Reprocessing brief 016's already-cached 29-event raw array through
+the new fingerprint (same raw data, only the dedupe key changed) dropped it to
+27 - exactly 2 duplicate rows removed, both named: the `{133.40, 134.06}`
+"Gnar killed Sion" pair (0.66s apart) and the `{147.85, 148.06}` "Aphelios
+killed Seraphine" pair (0.21s apart), both landing in the same `Math.round(t *
+0.5)` bucket. Satisfies Can't Skip's "event count is accounted for" - no
+unexplained drop, nothing eaten. But three other known jittered pairs from the
+same dataset did **not** merge, because they straddle a bucket boundary
+despite being close in time: `{128.15, 129.06}` (0.91s apart, buckets 64 vs
+65), `{136.81, 137.06}` (0.25s apart, buckets 68 vs 69), `{138.88, 139.06}`
+(0.18s apart, buckets 69 vs 70) - all confirmed live in the rendered list
+("Seraphine killed Blitzcrank" at 2:08 and 2:09 both still show, etc). A fixed
+grid halves the failure rate at each doubling of bucket width but cannot
+eliminate boundary-straddling entirely, and the brief's own Escalate section
+anticipated a version of this and asked for a report rather than a quiet
+re-tune - this is that report. Did not build a proximity-based merge (compare
+against already-seen events within N seconds, not a fixed grid) to close the
+gap; that changes the algorithm's shape, not its constant, which reads as the
+"per-event-type buckets... bigger change than this brief" the Escalate
+section already named as out of scope. Multikill did not lose any streaks to
+the wider bucket - the two `★ 2x multikill` rows (254.10s and 1566.65s) stayed
+distinct, confirming `KillStreak` in the tuple is doing its job.
+
+**Step 10 (a cue on a deduped event still seeks right) verified by reading
+the code, not by a live click.** `placeCue()` stores a raw `EventTime`
+timestamp with no reference to `eventFingerprint()` or `eventsByKey` at all -
+cues and the dedupe key are fully decoupled, so nothing here can affect where
+a cue seeks. Not click-tested live given this session's known Browser-pane
+hover/interaction limitations (see brief 014's outcome) - the code-level
+guarantee is unconditional regardless (no path connects the two), so this
+wasn't treated as a gap worth spending more calls closing.
