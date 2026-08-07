@@ -3,10 +3,14 @@
 Paste once at session start. One session works the queue in order, one brief at
 a time, stopping at the stage gates.
 
-Updated 2026-08-07: 001-007 done. Queue is 008 → 009 → 010 → 011 → 013 → 014 →
-015. Briefs are verbose and self-contained - each carries its own decisions,
-code anchors, steps, verification and traps - so this prompt only has to set the
-frame and the gates.
+Updated 2026-08-07 (second triage pass): 001-011 and 013-015 done, 012 cut.
+Queue is 016 → 017 → 018 → 019 → 020 → 021. Briefs are verbose and
+self-contained - each carries its own decisions, code anchors, steps,
+verification and traps - so this prompt only has to set the frame and the gates.
+
+Brief 016 is first because it gates the rest: the event harvest loses events, and
+017's dedupe work, 019's objective lane and issue #7 all read the data it fixes.
+See `TRIAGE.md` for how this queue was filled.
 
 ---
 
@@ -16,8 +20,8 @@ that drives League replays on a second monitor so I can record voiceover live in
 one pass. Live replay control only - not an editor, not a stats tool. If a
 feature doesn't help someone talk over a replay in real time, it's out.
 
-Queue:   C:\dev\lol-replay-interface\briefs\ready\   (order: 008, 009, 010, 011, 013, 014, 015)
-Archive: C:\dev\lol-replay-interface\briefs\archive\ (001-007, read the Outcome sections)
+Queue:   C:\dev\lol-replay-interface\briefs\ready\   (order: 016, 017, 018, 019, 020, 021)
+Archive: C:\dev\lol-replay-interface\briefs\archive\ (001-015, read the Outcome sections)
 Code:    C:\dev\lol-replay-interface\app\ - Node helper (server.js) + single-file
          vanilla-JS panel (public/index.html). No build step. Windows.
 
@@ -57,7 +61,7 @@ Work ONE brief at a time, in four stages:
   → STOP. Don't start the next brief without my go-ahead.
 
 Notes on working the briefs:
-- Line numbers in briefs are from commit d0ae049 and will drift. Symbol names
+- Line numbers in briefs are from commit e8e05b9 and will drift. Symbol names
   are stable - grep for those.
 - The swagger at https://127.0.0.1:2999/swagger/v3/openapi.json is authoritative
   for field names (the /docs HTML page 404s on curl). Everything is reachable
@@ -65,7 +69,7 @@ Notes on working the briefs:
   the self-signed cert.
 - Each brief has an "Escalate Instead Of Deciding" section. Use it.
 
-Start at Stage 1 for brief 008.
+Start at Stage 1 for brief 016.
 ```
 
 ---
@@ -79,6 +83,10 @@ session - if I say "next" without having tested, ask.
 
 **Between briefs.** Fine to `/clear` after Stage 4 - the brief files and the log
 carry the state forward. Repaste this prompt if you do.
+
+**When the queue runs dry**, see [`TRIAGE.md`](TRIAGE.md) - the companion process
+that turns open issues into the briefs this prompt executes. It has its own
+pasteable block and its own rules, and it deliberately writes no code.
 
 **Why this prompt got short (2026-08-07).** The previous version spent ninety
 lines explaining how to run a brief, because the briefs themselves deferred
