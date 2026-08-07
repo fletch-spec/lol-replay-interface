@@ -1,8 +1,8 @@
 ---
 id: brief-020
-state: ready
+state: complete
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-08
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: [brief-013]
@@ -252,3 +252,55 @@ chapter export, and cue storage moving out of `localStorage`.
 - **If tags come up mid-build** because the export looks empty without them,
   stop and read Out Of Scope again. That is the exact pressure the fence exists
   to resist.
+
+## Outcome
+
+**Built as decided, no scope questions came up.** `cuesAsMarkdown()` is a pure
+function beside `cuesAsText()` (no DOM, no window), called directly in the
+console with a 6-cue set covering every case the brief names - label+body,
+body-only, label-only, neither, and one with `<script>alert(1)</script>`,
+`&amp;`, backticks and a `#` in both the label and body. Output matched the
+brief's example shape exactly: `# Cue notes - CLASSIC, 27:03`, the
+`_N cues, exported YYYY-MM-DD_` line, then one `## MM:SS - label` (or bare
+`## MM:SS` when the label is empty) per cue with its body underneath only
+when one exists - no placeholder text either way.
+
+**The popup-blocked fallback (step 7) wasn't simulated - it actually ran.**
+This session's Browser pane blocks `window.open()` outright (it returned
+`null` on every real click, confirmed via a screenshot - no new tab appeared
+in `tabs_context`, the in-page textarea appeared instead), so verification
+step 10 is the one this brief actually got tested against, live, by
+necessity rather than by choice. Screenshotted the result: the fallback
+textarea held the exact markdown, pre-selected (visible highlight), and the
+`<script>alert(1)</script>` content rendered as literal characters with no
+alert firing and no `<b>` tag rendering as bold - direct visual confirmation
+that `textarea.value` was used, not `innerHTML` or string interpolation into
+the written document. This is stronger evidence than the code review alone
+would have given for the exact defect (step 5's Can't Skip item) the brief
+was most worried about.
+
+**The real `window.open()` path could not be visually confirmed** - it never
+successfully opened in this environment to check. The code writing into it
+(`document.open()`/`.write()`/`.close()` synchronously in the click handler,
+then `textarea.value` set after, matching the fallback's proven-safe
+approach exactly) is the same pattern already verified safe on the fallback
+side, and `window.open()`/`document.write()` are standard, well-defined APIs
+- but this is inference from a parallel code path, not a direct observation,
+and is flagged as such rather than folded into "verified."
+
+**`cuesAsText()` confirmed unchanged**, called directly before and after:
+identical `MM:SS - note` output, empty-note-then-timestamp-alone behaviour
+intact, body never appears in it. Zero-cues state correctly disables
+`Export notes` alongside the two existing buttons (all three share the same
+disabled-toggle line now). Reload-persistence confirmed: reloaded the page,
+`cuesAsMarkdown()` produced byte-identical output from the cues loaded back
+out of `localStorage`, not from anything held in session state.
+
+**Not verified: focus recovery after the window trip** (verification step
+11). Since `window.open()` never actually succeeded in opening a real window
+this session, there was no genuine focus trip to recover from - flagged
+rather than claimed. The mechanism itself (the focus chip, `document
+.hasFocus()`) is unchanged from brief 011 and wasn't touched by this brief.
+
+No tags added, per Out Of Scope - not reconsidered, not flagged as pressure
+during the build.

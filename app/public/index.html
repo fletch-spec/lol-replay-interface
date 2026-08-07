@@ -1373,6 +1373,7 @@
         <span class="cmd-group" id="cueCmds"></span>
         <span class="control-sep"></span>
         <button class="cues-action-btn" id="cuesExportBtn">Copy as text</button>
+        <button class="cues-action-btn" id="cuesExportMdBtn">Export notes</button>
         <button class="cues-action-btn" id="cuesClearBtn">Clear all</button>
       </div>
       <div class="cues-list" id="cuesList"></div>
@@ -1424,6 +1425,7 @@
   const cuePinsEl = document.getElementById('cuePins');
   const cuesListEl = document.getElementById('cuesList');
   const cuesExportBtnEl = document.getElementById('cuesExportBtn');
+  const cuesExportMdBtnEl = document.getElementById('cuesExportMdBtn');
   const cuesClearBtnEl = document.getElementById('cuesClearBtn');
   const loopRegionEl = document.getElementById('loopRegion');
   const loopEdgeAEl = document.getElementById('loopEdgeA');
@@ -3066,6 +3068,7 @@
     });
 
     cuesExportBtnEl.disabled = cues.length === 0;
+    cuesExportMdBtnEl.disabled = cues.length === 0;
     cuesClearBtnEl.disabled = cues.length === 0;
   }
 
@@ -3078,6 +3081,7 @@
   document.getElementById('cuesCard').appendChild(exportAreaEl);
 
   cuesExportBtnEl.addEventListener('click', () => exportCues(cuesExportBtnEl));
+  cuesExportMdBtnEl.addEventListener('click', exportCuesMarkdown);
   cuesClearBtnEl.addEventListener('click', () => {
     cues = [];
     activeCue = null;
@@ -3119,6 +3123,67 @@
     }, 2000);
   }
 
+  // Full markdown - label *and* body, everything cuesAsText() deliberately
+  // leaves out to protect the YouTube chapter contract. No DOM, no window -
+  // just the string, so it's testable on its own and reusable by the
+  // popup-blocked fallback below.
+  function cuesAsMarkdown() {
+    // replayIdentity() reads "-:0" before a replay connects (identityKnown()
+    // is false then) - the cues are still real, but the header must not say
+    // that, so this doesn't call replayIdentity() at all.
+    const header = identityKnown()
+      ? `# Cue notes - ${gameModeEl.textContent}, ${formatTime(lastPolled.length || 0)}`
+      : '# Cue notes';
+    const date = new Date().toISOString().slice(0, 10);
+    const lines = [header, `_${cues.length} cue${cues.length === 1 ? '' : 's'}, exported ${date}_`, ''];
+    // cues is kept sorted by placeCue(), but the export shouldn't inherit
+    // that assumption silently.
+    for (const cue of [...cues].sort((a, b) => a.t - b.t)) {
+      // An empty cue is a timestamp someone marked, and that's a complete
+      // thought - no placeholder text for a missing label or body.
+      lines.push(cue.note ? `## ${formatTime(cue.t)} - ${cue.note}` : `## ${formatTime(cue.t)}`);
+      if (cue.body) lines.push(cue.body);
+      lines.push('');
+    }
+    return lines.join('\n').trimEnd() + '\n';
+  }
+
+  // A second export, not a replacement for the in-page textarea above:
+  // window.open() moves keyboard focus off the panel, and the panel's
+  // hotkeys only work while it has focus - brief 011 shipped a chip
+  // specifically because dead keypresses from exactly this were confusing.
+  // Pressing this mid-take costs hotkeys until the user clicks back, so the
+  // no-focus-cost textarea path stays for that reason - don't consolidate
+  // them later. Called synchronously (no await first) because window.open()
+  // needs transient user activation and loses it otherwise.
+  function exportCuesMarkdown() {
+    const markdown = cuesAsMarkdown();
+    const win = window.open();
+    if (!win) {
+      // Popup blocked - fall back to the existing in-page textarea rather
+      // than failing silently.
+      exportAreaEl.value = markdown;
+      exportAreaEl.classList.add('visible');
+      exportAreaEl.focus();
+      exportAreaEl.select();
+      return;
+    }
+    win.document.open();
+    win.document.write(
+      '<!doctype html><html><head><title>Cue notes</title><style>' +
+        'body{margin:0;background:#12161c}' +
+        'textarea{box-sizing:border-box;width:100%;height:100vh;border:0;padding:20px;' +
+        'background:#12161c;color:#e6e9ef;font:14px/1.5 Consolas,"Cascadia Mono",monospace;resize:none}' +
+        '</style></head><body><textarea readonly></textarea></body></html>'
+    );
+    win.document.close();
+    // textarea.value, never innerHTML or interpolating into the written HTML
+    // above - cue text is user input and will contain <, &, quotes.
+    const area = win.document.querySelector('textarea');
+    area.value = markdown;
+    area.focus();
+    area.select();
+  }
 
   // --- Playback writes ---
 
