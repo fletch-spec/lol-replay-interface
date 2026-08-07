@@ -1,8 +1,8 @@
 ---
 id: brief-021
-state: ready
+state: in-progress
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-08
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: [brief-008]
@@ -225,3 +225,32 @@ is still not this brief.
 - **If streamer mode turns out to affect more than the camera** - the event feed,
   the roster, `playerlist` names - that is bigger than this issue and needs its
   own triage pass.
+
+## Progress (blocked, not complete)
+
+**Step 3 done.** `curl -sk https://127.0.0.1:2999/swagger/v3/openapi.json`
+searched case-insensitively for `streamer` and every `stream*` match: none.
+The API does not model streamer mode anywhere in its spec. Confirmed at the
+`/replay/render` response level too - a live read (below) has no field that
+plausibly maps to it either. Per the brief's own Trap, this means *if* outcome
+2 (client constraint) turns out to be the answer, there is no field to poll
+and no detect-and-warn chip is buildable - that branch would be
+documentation-only by necessity, not by choice.
+
+**Step 2's "before" half done** - streamer mode presumably off, no lock
+active:
+```json
+{"cameraAttached": false, "cameraLockX": false, "cameraLockY": false, "cameraLockZ": false,
+ "cameraLookSpeed": 1.0, "cameraMode": "top", "selectionName": "", ...}
+```
+Full baseline captured and available for a before/after diff once there's an
+"after" to diff it against.
+
+**Step 1 cannot run from this session.** It requires turning on streamer mode
+inside the League client's own in-game settings, physically - not reachable
+through the panel, the proxy, or anything else in this session's toolset. Per
+this brief's own Escalate section ("if step 1 does not reproduce the
+symptom, stop and ask") and Decision ("read state back, never trust a 200" -
+there is no write to make here without the client's actual streamer-mode
+toggle first), this is where the brief stops until Fletcher can toggle it and
+report what changes.
