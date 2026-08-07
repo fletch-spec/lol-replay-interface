@@ -2538,12 +2538,31 @@
     try {
       await requestSeek(Math.max(0, length - 1));
 
-      // Poll briefly for GameEnd to show up (definitive harvest-complete signal); give up after ~3s.
-      for (let i = 0; i < 6; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
+      // Poll until the merged event count stops growing across consecutive
+      // ticks. GameEnd is not a completion signal - it can arrive before the
+      // rest of the game's events have backfilled (brief 010) - so this waits
+      // on the thing that actually matters: eventsByKey no longer changing.
+      // Hard ceiling so a stuck client can't hang the scan forever.
+      const SETTLE_INTERVAL_MS = 500;
+      const REQUIRED_STABLE_TICKS = 3;
+      const MAX_TICKS = 20; // ~10s hard ceiling
+      let lastCount = -1;
+      let stableTicks = 0;
+      let ticksTaken = 0;
+      for (let i = 0; i < MAX_TICKS; i++) {
+        await new Promise((resolve) => setTimeout(resolve, SETTLE_INTERVAL_MS));
         if (token !== harvestToken) return; // a different replay connected mid-harvest
-        if ([...eventsByKey.values()].some((e) => e.EventName === 'GameEnd')) break;
+        ticksTaken = i + 1;
+        const count = eventsByKey.size;
+        if (count === lastCount) {
+          stableTicks++;
+          if (stableTicks >= REQUIRED_STABLE_TICKS) break;
+        } else {
+          stableTicks = 0;
+        }
+        lastCount = count;
       }
+      console.log(`[events] scan settled after ${ticksTaken} ticks (${eventsByKey.size} events)`);
 
       if (token === harvestToken) {
         try {

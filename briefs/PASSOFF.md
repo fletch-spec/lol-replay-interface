@@ -3,14 +3,16 @@
 Paste once at session start. One session works the queue in order, one brief at
 a time, stopping at the stage gates.
 
-Updated 2026-08-07 (second triage pass): 001-011 and 013-015 done, 012 cut.
-Queue is 016 → 017 → 018 → 019 → 020 → 021. Briefs are verbose and
-self-contained - each carries its own decisions, code anchors, steps,
-verification and traps - so this prompt only has to set the frame and the gates.
+Updated 2026-08-08: 001-011, 013-016 done, 012 cut. Queue is
+017 → 018 → 019 → 020 → 021. Briefs are verbose and self-contained - each
+carries its own decisions, code anchors, steps, verification and traps - so
+this prompt only has to set the frame and the gates.
 
-Brief 016 is first because it gates the rest: the event harvest loses events, and
-017's dedupe work, 019's objective lane and issue #7 all read the data it fixes.
-See `TRIAGE.md` for how this queue was filled.
+Brief 016 (event harvest) is done - see its Outcome for what was actually
+wrong. It found a client-side quirk (eventdata re-emits events with new
+EventIDs and drifted EventTime on re-pass) that bears directly on brief 017's
+dedupe work; read that Outcome before starting 017. See `TRIAGE.md` for how
+this queue was filled.
 
 ---
 
@@ -20,8 +22,8 @@ that drives League replays on a second monitor so I can record voiceover live in
 one pass. Live replay control only - not an editor, not a stats tool. If a
 feature doesn't help someone talk over a replay in real time, it's out.
 
-Queue:   C:\dev\lol-replay-interface\briefs\ready\   (order: 016, 017, 018, 019, 020, 021)
-Archive: C:\dev\lol-replay-interface\briefs\archive\ (001-015, read the Outcome sections)
+Queue:   C:\dev\lol-replay-interface\briefs\ready\   (order: 017, 018, 019, 020, 021)
+Archive: C:\dev\lol-replay-interface\briefs\archive\ (001-016, read the Outcome sections)
 Code:    C:\dev\lol-replay-interface\app\ - Node helper (server.js) + single-file
          vanilla-JS panel (public/index.html). No build step. Windows.
 
@@ -69,7 +71,7 @@ Notes on working the briefs:
   the self-signed cert.
 - Each brief has an "Escalate Instead Of Deciding" section. Use it.
 
-Start at Stage 1 for brief 016.
+Start at Stage 1 for brief 017.
 ```
 
 ---

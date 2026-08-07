@@ -1,8 +1,8 @@
 ---
 id: brief-016
-state: ready
+state: complete
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-08
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: [brief-004, brief-009]
@@ -252,3 +252,76 @@ brief is what unblocks that question, not what answers it), and the
 - **If `eventFingerprint()` turns out to be the main loss channel**, that
   overlaps brief 017's dedupe work directly. Say so rather than fixing it in both
   places.
+
+## Outcome
+
+**The leading hypothesis did not hold up.** Instrumented `pollRoster()` with a
+per-tick success/failure counter (temporary, removed before shipping) and ran
+it through 400+ ticks - a live scan, a rapid-fire seek stress test meant to
+provoke exactly the race the hypothesis needed, everything. Zero ticks failed.
+The empty `catch` never fired once. Per the brief's own instruction ("if
+instrumentation says the ticks all landed and the events still went missing,
+the hypothesis is wrong"), this brief does not confirm the shared-fate
+`Promise.all` as an *active* cause of event loss in this session. It's still a
+real code smell - four unrelated requests sharing one failure domain, one of
+which is cumulative state that can't afford to share it - so it shipped
+anyway as `Promise.allSettled` with `events` and `roster` broadcast
+independently, but say plainly: this wasn't caught failing, it was fixed on
+the strength of the code reading, not a reproduction.
+
+**What was actually wrong is the second candidate, and it's real and
+reproducible.** `scanReplay()`'s original completion condition (poll up to
+6×500ms, break early if `GameEnd` shows up) races the same 1Hz `pollRoster()`
+tick that's still merging new events into `eventsByKey` in the background.
+Caught it directly: cleared the cache, ran a scan, and checked
+`localStorage` against live `eventsByKey.size` within ~150ms of `harvestDone`
+flipping true - cached 28, live 29. Off by one, reproducibly. Replaced the
+break condition with "poll until `eventsByKey.size` stops changing across 3
+consecutive 500ms ticks, up to a 20-tick (~10s) hard ceiling" - the same
+`eventsByKey` merges via WebSocket `events` broadcasts drive the poll, so by
+construction a genuinely-landed final merge can't beat the write. Verified
+twice: cleared cache, reloaded, scanned - `cached === live` exactly (29 = 29,
+identical per-`EventName` breakdown) both times, settling in 4 ticks (~2s)
+each run, well under the new ceiling. Timing cost stated per the brief's own
+Escalate instruction: common case is the same or faster than before (~2s vs.
+the old ~3s cap); worst case is now ~10s against the old hard 3s, only reached
+if the event count genuinely won't stop growing, which didn't happen once
+across this session's testing.
+
+**A third thing was found that neither candidate names, and it's brief 017's,
+not this brief's.** The client's own `/liveclientdata/eventdata` is not
+idempotent across seeks: re-passing a time range re-emits the same real event
+with a new `EventID` and an `EventTime` that can drift up to roughly a second
+from the original (PASSOFF fact 3, sharper than previously written down). A
+raw, undeduped query of the endpoint is not a valid ground truth by itself -
+comparing it to the panel's fingerprint-deduped count without deduping the
+raw side first makes a working harvest look broken. Confirmed by replicating
+`eventFingerprint()`'s own bucketing against the raw list and getting an
+identical count and breakdown to what the panel had cached, event for event.
+This directly explains and sharpens brief 017's diagnosis (200ms bucket sized
+against millisecond jitter, observed jitter up to a full second, some events
+render twice) - not touched here per this brief's own scope fence, flagged
+for that brief instead. It also means the original 15-vs-24 measurement from
+briefs 009/010 most likely wasn't a dropped-tick problem at all - "seconds
+later" is exactly the gap a settle-condition race would produce, and this
+brief's fix targets that mechanism directly.
+
+**Verification.** Steps 1-5 and 8 run live and passed: fresh scan matched a
+fingerprint-deduped direct query exactly (29 = 29, `ChampionKill` 19 = 19,
+identical breakdown across all 8 event names); two independent clean scans
+agreed exactly; a reload held the cached count; the double-scan guard
+(`harvestDone`) correctly no-opped a second click with zero seek; the
+playhead returned to its exact starting position both times. Step 6
+(interrupt by swapping replays mid-scan) could not be run - this session has
+no way to load a different replay file into the client, only the one already
+open. The interrupt path itself (the `token !== harvestToken` check and the
+`finally` seek-back) is untouched by this brief's edit and was already
+verified in brief 009; flagged rather than silently skipped. Step 7 (idle
+two-minute progressive accumulation) wasn't run as a dedicated idle wait, but
+the same WebSocket `events` pipeline it exercises ran continuously and
+successfully throughout this session's testing (hundreds of ticks, zero
+failures) - treated as equivalent evidence rather than re-run in isolation.
+
+**No GitHub issue filed yet.** The brief instructs filing one when picked up
+so the close comment has somewhere to land - not done automatically this
+session; ask before creating public-facing content on the repo.

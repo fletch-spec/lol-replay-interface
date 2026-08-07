@@ -233,30 +233,44 @@ async function pollRoster() {
   if (lastState !== 'connected' || rosterPollInFlight) return;
   rosterPollInFlight = true;
   try {
-    const [players, render, eventdata, game] = await Promise.all([
+    const [playersResult, renderResult, eventdataResult, gameResult] = await Promise.allSettled([
       replayGet('/liveclientdata/playerlist'),
       replayGet('/replay/render'),
       replayGet('/liveclientdata/eventdata'),
       replayGet('/replay/game'),
     ]);
-    broadcast({
-      type: 'roster',
-      players,
-      // Whole render object - the HUD toggles and camera presets need to
-      // reflect real client state, and it's already being fetched here.
-      render,
-      camera: {
-        attached: render.cameraAttached,
-        selectionName: render.selectionName,
-        // The panel needs the mode to tell a real camera lock from a bare
-        // selection: attached/selectionName are both inert unless mode is fps.
-        mode: render.cameraMode,
-      },
-      processID: game.processID,
-    });
-    broadcast({ type: 'events', events: eventdata.Events || [], processID: game.processID });
-  } catch (err) {
-    // Roster is reference data - a miss here isn't worth spamming the console.
+
+    const processID = gameResult.status === 'fulfilled' ? gameResult.value.processID : null;
+
+    // Roster is reference data - a miss on any of these three just skips this
+    // tick's roster broadcast, the same tolerance the old shared catch gave it.
+    if (playersResult.status === 'fulfilled' && renderResult.status === 'fulfilled' && gameResult.status === 'fulfilled') {
+      const render = renderResult.value;
+      broadcast({
+        type: 'roster',
+        players: playersResult.value,
+        // Whole render object - the HUD toggles and camera presets need to
+        // reflect real client state, and it's already being fetched here.
+        render,
+        camera: {
+          attached: render.cameraAttached,
+          selectionName: render.selectionName,
+          // The panel needs the mode to tell a real camera lock from a bare
+          // selection: attached/selectionName are both inert unless mode is fps.
+          mode: render.cameraMode,
+        },
+        processID,
+      });
+    }
+
+    // Events are cumulative state being reconstructed one tick at a time, not
+    // reference data - a miss here must not share fate with the roster's
+    // tolerance for a dropped tick, or the timeline silently loses events.
+    if (eventdataResult.status === 'fulfilled') {
+      broadcast({ type: 'events', events: eventdataResult.value.Events || [], processID });
+    } else {
+      console.log(`[replay] eventdata poll failed: ${eventdataResult.reason && eventdataResult.reason.message}`);
+    }
   } finally {
     rosterPollInFlight = false;
   }
