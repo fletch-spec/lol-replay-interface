@@ -499,15 +499,40 @@
   .marker.lane0 { top: 2px; }
   .marker.lane1 { top: 14px; }
   .marker.lane2 { top: 25px; }
-  .marker.kill { background: var(--kill); }
-  .marker.objective { background: var(--obj); }
-  .marker.tower { background: var(--struct); }
-  .marker.unknown { background: var(--dim); }
+  /* Team owns colour now, category owns lane and shape (issue #14) - category
+     was carried twice (lane + hue) while team had only a 3px cap four points
+     of red away from --kill. team-none covers aces (handled separately below)
+     and any event whose killer doesn't resolve to a player - a neutral
+     objective, or a structure killed by a minion rather than a champion. */
+  .marker.team-order { background: var(--blue); }
+  .marker.team-chaos { background: var(--red); }
+  .marker.team-none { background: var(--dim); }
   .marker.ace {
     background: #fff;
     top: 0;
     height: 12px;
     width: 5px;
+  }
+  /* Single-event shapes only - a cluster is a number, not a shape (brief 014).
+     Kills ship the documented diamond fallback rather than an X: this
+     session's Browser pane doesn't composite frames (briefs 014, 018), so an
+     ~8px glyph's legibility can't be verified by eye, and shipping one
+     unverified fails the brief's own "a smudge that is technically an X does
+     not [pass]" bar more certainly than the always-legible fallback does.
+     Neutral objectives get the same diamond by original decision - lane and
+     colour still tell kill and neutral apart, shape was the bonus channel. */
+  .marker.kill:not(.cluster),
+  .marker.objective:not(.cluster) {
+    width: 7px;
+    height: 7px;
+    border-radius: 1px;
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .marker.kill:not(.cluster).hot,
+  .marker.kill:not(.cluster):hover,
+  .marker.objective:not(.cluster).hot,
+  .marker.objective:not(.cluster):hover {
+    transform: translateX(-50%) rotate(45deg) scaleY(1.35);
   }
   /* Clustered markers grow from their left edge, not centred - the left edge
      is the first event's real time (brief 014), and a centred wide cluster
@@ -541,17 +566,6 @@
     outline: 2px solid rgba(255, 255, 255, 0.9);
     outline-offset: 1px;
   }
-  .marker .cap {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 3px;
-    border-radius: 2px 2px 0 0;
-  }
-  .marker .cap.order { background: var(--blue); }
-  .marker .cap.chaos { background: var(--red); }
-
   /* Hover card - replaces native title tooltips. For a cluster it lists every
      event, each seeking to its own timestamp: before this, only the first
      event in a cluster was reachable at all. */
@@ -1076,7 +1090,10 @@
   }
   .event-dot.kill { background: var(--bad); }
   .event-dot.objective { background: var(--warn); }
-  .event-dot.tower { background: var(--accent); }
+  /* Was --accent (blue) here, a real mismatch against the legend/marker/hover
+     card's grey --struct for the same category - found while touching this
+     block for issue #14's colour pass, fixed in passing. */
+  .event-dot.tower { background: var(--struct); }
   .event-dot.unknown { background: var(--dim); }
   .event-dot.ace { background: #fff; }
   .event-label {
@@ -1322,10 +1339,10 @@
           </div>
           <div class="legend">
             <span class="legend-item"><span class="legend-dot kill"></span>Kill</span>
-            <span class="legend-item"><span class="legend-dot objective"></span>Objective</span>
-            <span class="legend-item"><span class="legend-dot tower"></span>Structure</span>
+            <span class="legend-item"><span class="legend-dot objective"></span>Neutral (dragon, baron, herald)</span>
+            <span class="legend-item"><span class="legend-dot tower"></span>Structure (turret, inhibitor)</span>
             <span class="legend-item"><span class="legend-dot ace"></span>Ace</span>
-            <span class="legend-item">Top cap = team</span>
+            <span class="legend-item">Marker colour = team</span>
             <span class="legend-item"><span class="legend-dot cue"></span>Cue (below bar)</span>
           </div>
         </div>
@@ -2295,9 +2312,15 @@
     const isAce = cluster.events.some((e) => categoryFor(e) === 'ace');
     const cat = isAce ? 'ace' : categoryFor(first);
     const count = cluster.events.length;
+    // Ace keeps its own fixed white appearance (deliberate, brief 014) and
+    // never takes a team class. Everything else is coloured by the killer's
+    // team, or team-none when there isn't one - a structure killed by a
+    // minion, or a neutral objective, resolve no team the same way.
+    const team = isAce ? null : teamFor(first.KillerName);
+    const teamClass = isAce ? '' : ` team-${team === 'ORDER' ? 'order' : team === 'CHAOS' ? 'chaos' : 'none'}`;
 
     const marker = document.createElement('div');
-    marker.className = `marker ${cat} lane${cluster.lane}${count > 1 ? ' cluster' : ''}`;
+    marker.className = `marker ${cat} lane${cluster.lane}${teamClass}${count > 1 ? ' cluster' : ''}`;
     marker.style.left = `${(first.EventTime / length) * 100}%`;
     if (count > 1) {
       marker.style.width = `${clusterWidthPx(count)}px`;
@@ -2305,13 +2328,6 @@
       countEl.className = 'marker-count';
       countEl.textContent = String(count);
       marker.appendChild(countEl);
-    }
-
-    const team = teamFor(first.KillerName);
-    if (team && cat !== 'ace') {
-      const cap = document.createElement('div');
-      cap.className = `cap ${team === 'ORDER' ? 'order' : 'chaos'}`;
-      marker.appendChild(cap);
     }
 
     marker.addEventListener('mousedown', (e) => e.stopPropagation());

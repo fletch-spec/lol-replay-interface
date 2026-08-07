@@ -1,8 +1,8 @@
 ---
 id: brief-019
-state: ready
+state: complete
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-08
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: [brief-014, brief-016, brief-017]
@@ -293,3 +293,95 @@ brief 014 rejected as a future brief.
 - **If moving team onto the body makes categories genuinely ambiguous** in real
   use - not in theory - report it with a screenshot. The fallback is a category
   shape carrying more of the load, not the cap coming back.
+
+## Outcome
+
+**Steps 1-2 hit the brief's own escalate condition, narrowly.** This session's
+only available replay has zero neutral objective events of any kind - not
+grubs, not dragon, not baron, not herald - confirmed by brief 016's own full
+ground-truth scan (the entire game is `ChampionKill`/`FirstBlood`/`Multikill`/
+`Ace`/`GameStart`/`MinionsSpawning`/`GameEnd`/`InhibRespawned`) and by zero
+`[events] unrecognised EventName` console logs across this entire session.
+Read the Escalate section literally: it says stop before *restyling an empty
+lane*, not stop the brief - so `EVENT_CATEGORY` was left untouched (no grub
+entry added, since there is no real observed `EventName` to add one from -
+Can't Skip's "no invented strings" rule), but steps 3-9, which don't depend
+on lane-1 having content, were built and verified. This finding is itself
+relevant evidence for #7 (still open, still blocked) and is reported as
+that - not used here to decide whether lane 1 should exist, which the brief
+itself calls a bigger call than a colour pass.
+
+**Steps 3-4 (team owns colour, category owns shape) built and verified live
+and synthetically.** `buildMarker()` now sets `team-order`/`team-chaos`/
+`team-none` from the unchanged `teamFor()` (confirmed still unchanged per
+brief 017's own note) instead of building a `.cap` child element; the `.cap`
+CSS rules are deleted, not left unused. Live, on the one available replay
+(all kills/aces, no objectives/structures): 5 clusters rendered with exactly
+the expected colours - `rgb(224,87,107)` for `team-chaos` (`--red`),
+`rgb(77,141,255)` for `team-order` (`--blue`), matching the CSS variables
+exactly. Cluster widths measured against `clusterWidthPx()`'s formula for all
+5: exact match every time, confirming step 6 (clusters untouched). Single-
+event shapes (kill, objective, tower, unknown, and the no-team case) don't
+exist live in this replay's data, so tested synthetically by calling
+`buildMarker()` directly with constructed clusters - kill and objective
+singles both render as a 7×7 diamond (rotated bounding box ≈9.9×9.9px,
+matching `7×√2`), tower singles stay the plain 4×9 rectangle, a
+minion-killed tower correctly falls to `team-none` (grey), and an invented
+unknown `EventName` correctly gets no shape class (plain rectangle) while
+still picking up its killer's team colour.
+
+**Step 5's gate: shipped the diamond fallback for kills, not the X, and said
+why rather than guessing.** The gate is a legibility judgement at ~8px, which
+requires actually seeing pixels - this session's Browser pane doesn't
+composite frames (confirmed again this brief; same limitation as briefs 014
+and 018), so there was no way to "measure it" in the sense the brief means.
+Shipping an unverified glyph and calling it done would be exactly the "smudge
+that is technically an X" the gate exists to catch. The documented fallback
+was built instead: kills and neutral objectives share one diamond shape,
+distinguished by lane and colour, which were already the two channels doing
+the real work per the brief's own framing.
+
+**Step 7 (legend) and step 8 (other dot surfaces) done.** Legend text now
+says "Neutral (dragon, baron, herald)" and "Structure (turret, inhibitor)"
+instead of the unexplained "Objective"/"Structure" pair, and "Top cap = team"
+is replaced with "Marker colour = team" rather than left describing something
+that no longer exists. Decision on `.legend-dot`/`.hc-dot`/`.event-dot`:
+**stayed categorical, did not follow the marker to team colour** - written
+down in the CSS comment. Reasoning: the marker is the one surface with no
+room for text, which is the actual legibility problem this brief exists to
+fix; the list and hover card already show full event text alongside their
+dots; consistency with the legend (which is also categorical) matters more
+than matching the compact marker's new scheme. Found and fixed a real,
+pre-existing, unrelated bug while touching this block: `.event-dot.tower`
+used `--accent` (blue, `#4d8dff`) while the legend/marker/hover-card's tower
+colour was `--struct` (grey, `#7f8ea3`) - the event list's structure dots
+have been rendering the wrong colour since before this brief. Fixed in
+passing, noted rather than silently folded in.
+
+**The two numeric traps were checked by computation, not by eye, since eyes
+aren't available this session.** `--blue` and `--accent` are confirmed the
+same value (`#4d8dff`). Computed the actual composited colours rather than
+asserting it's probably fine: the scrub fill (accent at 30% over the
+`#0f1216` track) composites to `rgb(34,55,92)`; a "past" marker (`opacity: 1`,
+unchanged existing rule) painted on top is fully opaque `rgb(77,141,255)` -
+same hue, but a real ~2-3x brightness/saturation jump per channel, not a
+zero-contrast collision. A "future" marker (`opacity: 0.58`, off the fill
+entirely) composites to `rgb(51,89,157)` against the near-black track, high
+contrast. The `.marker-count` digit's WCAG contrast ratio against the three
+new marker backgrounds - blue 4.08, red 3.87, dim 4.11 - is within noise of
+the old category colours it replaced (kill 3.92, obj 5.80, struct 3.96): no
+meaningful regression, though the objective/neutral case did lose its old
+higher-contrast fixed gold in exchange for consistency with the new scheme.
+Both findings are numeric, not visual - flagged as weaker evidence than a
+screenshot and reported as such, not represented as "looks fine."
+
+**Step 9 (lane re-check) partially verified.** Confirmed live: this
+replay's lanes 1 and 2 (no objectives, no structures) both collapse
+correctly and hover/click still resolve to the right cluster, on a replay
+where the lane math previously worked and now still does. Could not test
+"on a replay with grubs" - none available, per the step-1 finding above.
+
+**Live interaction re-verified after the marker rewrite** (click seeks,
+shift+click cues without seeking, hover opens the right cluster, resize
+re-clusters and every non-ace marker carries a team class) - not assumed
+unchanged just because the click/hover listeners themselves weren't touched.
