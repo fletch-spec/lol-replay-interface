@@ -49,4 +49,4 @@ See [`TEMPLATE.md`](TEMPLATE.md). Six sections, all short:
 
 Newest first. One line per session.
 
-_No sessions logged yet - the first entry appears on the first WRAP._
+- [2026-08-08 - Ship briefs 022-026, then a Firefox detour](2026-08-08-01-briefs-022-026-firefox-detour.md) - queue closed, then a Chromium-only session chased an unreproducible Firefox bug for 30% of its budget before a web search found the real cause.

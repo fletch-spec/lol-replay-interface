@@ -1,6 +1,6 @@
 ---
 id: brief-023
-state: ready
+state: complete
 created: 2026-08-08
 updated: 2026-08-08
 agent: user
@@ -219,3 +219,39 @@ the chips are in scope.
 - **If the mode string turns out to vary** across replays (anything other than
   `CLASSIC`), say so before deleting the chip - it would mean the chip carries
   information after all, and #21's premise needs Fletcher's second look.
+
+## Outcome
+
+Shipped as decided. Reproduced #25 first, exactly as described: with
+`setState('no-replay', ...)` + `clearTransportDisplay()`, the chips read
+`▶ Playing` / `1×` while the status line correctly said `No replay loaded`.
+Recorded the pre-change identity shape (`CLASSIC:1623`, no uppercasing beyond
+what the raw API already returns) before touching anything, so step 3 had a
+real baseline to check against instead of a guess.
+
+The consolidation the brief expected (three separate reads of
+`gameModeEl.textContent`) turned out to already be one: `eventsCacheKey()`
+and `identityKnown()` both go through a shared `replayIdentity()` helper.
+Repointing `gameMode`, `identityKnown()` and `cuesAsMarkdown()` at the new
+module-scope `gameMode` variable was three edits, not the brief's original
+three read-sites - same outcome, fewer places for the two versions to drift.
+
+Verified live: cache round-trip survives a reload (43 events scanned, 42
+shown after reload from `lol-events:CLASSIC:1623` with no re-scan - the
+41-vs-42 display/cache count gap is pre-existing display logic, untouched
+here), cue persistence survives a reload at `cues:CLASSIC:1623`, and the
+export header still prints the real mode (`# Cue notes - CLASSIC, 27:03`).
+Placed test cue was cleared via `Clear all` afterward rather than left in
+the user's data. Pause/unpause and speed presets behave identically to
+before when connected - the `connected &&` guard is a no-op on that path.
+Confirmed the disconnected chips recover within one poll tick with correct
+classes once the real (still-open) replay's WebSocket pushed `connected`
+back, which is what catches a stuck label cache.
+
+**Escalation the brief asked for, honestly reported rather than assumed
+away:** only one replay was available this session (the same one every
+recent brief has used), and its mode string is `CLASSIC` throughout. The
+premise that the mode never varies was not independently confirmed here -
+it was inherited, not re-tested. If a differently-moded replay ever loads
+and #21 turns out to have been wrong, `gameMode` is one variable to fix,
+not three call sites.

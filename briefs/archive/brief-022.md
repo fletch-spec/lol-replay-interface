@@ -1,6 +1,6 @@
 ---
 id: brief-022
-state: ready
+state: complete
 created: 2026-08-08
 updated: 2026-08-08
 agent: user
@@ -213,3 +213,34 @@ the door, not the room.
 - **If the split control cannot be built without a wrapper that breaks
   `sceneEl`'s disabled state**, stop. That state is the guard on every camera and
   HUD write.
+
+## Outcome
+
+Shipped as decided - card dropped, split control built, Reset restacked under
+DISTANCE. Two things the brief didn't anticipate:
+
+- **The two-row Distance/Reset column is taller than a single button, and
+  step 6's "no taller than baseline" gate is real** - the first pass measured
+  62px against a baseline of 52px (measured by diffing against the pre-brief
+  file served statelessly, since there was no "before" measurement on record -
+  add that to why step 1 exists). Fixed by tightening the column itself
+  (`gap: 2px`, `line-height: 1` on the label, `padding: 1px 7px` + `font-size:
+  10px` on Reset only, scoped via `.camera-bar-group .setup-toggle` so the
+  shared `.setup-toggle` rule is untouched) rather than touching the row's
+  padding. Final: 52px, matching baseline exactly.
+- **`min-width: 84px` on `.cinematic-btn` was not enough** - "Restore HUD"'s
+  natural content width is ~92px, and `min-width` is a floor, not a ceiling,
+  so the button grew past it and shifted `namesToggle` and the split control
+  8px left on toggle. Raised to `96px`; toggling now moves zero other elements
+  in either direction, confirmed by DOM rect comparison before/after/restored.
+
+Verified by DOM measurement and rect comparison against a stateless copy of
+the pre-brief file served from the same helper (the Browser pane still can't
+composite frames for a screenshot - same limitation brief 018/019 hit).
+Cinematic toggle, Setup caret, Hide names, the disabled-state guard (`#scene`
+still contains both new wrapper elements) and the 900-1500px resize range all
+checked live. Reset's handler and slider-snap were confirmed unchanged
+(fires, snaps to 2100 per the pre-existing step-snap behaviour); actually
+watching the camera reframe was not re-verified since no roster item was
+camera-locked in the live session - that path is untouched by this brief and
+was already covered by brief 007.

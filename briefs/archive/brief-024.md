@@ -1,6 +1,6 @@
 ---
 id: brief-024
-state: ready
+state: complete
 created: 2026-08-08
 updated: 2026-08-08
 agent: user
@@ -229,3 +229,48 @@ their bindings.
 - **If the zero-gap unit and the height difference turn out to look wrong
   together**, screenshot both and ask. #27 asked for both in one sentence; if
   they fight, that is Fletcher's call.
+
+## Outcome
+
+#27 shipped as decided; #26 stays open, still unreproduced.
+
+Ran the sweep before touching anything: 820-1500px in 20px steps (measured via
+an iframe of the live app resized in a loop, since the Browser pane can't
+composite frames for a screenshot - same limitation as every recent brief).
+Baseline: zero overlaps at every width, max button height 41px throughout
+(no wrapping), 4 lines at 820px narrowing to 2 lines at 1140px. Agrees with
+triage's finding well enough to build on.
+
+`#transportCmds` split into `#seekBackGroup` / `#seekFwdGroup` flanking
+`#pauseBtn`, still built through `commandButton()` so `refreshCommands()`
+keeps disabling them correctly. The joined unit keeps each button's own
+border and height (not one shared box) - inner corners squared, `margin-left:
+-1px` collapses the doubled border into one seam, `.transport-unit button:
+active { transform: none }` turned off so one segment doesn't visibly slide
+against its fused neighbours on click (the trap called this out explicitly;
+decided to disable it here rather than leave it, since the joined-unit
+illusion is the point of the brief). Re-ran the sweep after: zero overlaps
+across the same 820-1500px range, and hardening measurably improved the wrap
+behaviour - the row never exceeds 3 lines now (was 4 at 820px), and the
+3-to-2-line transition moved from ~1140px to ~1100px.
+
+Verified live: order is `« 5s` `Pause` `5s »` left to right; clicking each
+seek button and pressing `←`/`→` both move the read-back display time by
+~5s in the correct direction; shift+`←` still does ~1s, not 5; `.transport.
+disabled` still dims and blocks all three together with no replay connected;
+toggling Pause/Play does not change the unit's width (`.pause-btn`'s fixed
+120px holds); speed presets, event-stepper group and the hint line are
+byte-for-byte unchanged.
+
+**Step 6, run rather than skipped: #26 still does not reproduce.** Approximated
+browser zoom with the CSS `zoom` property (Chromium-only, since the harness
+has no control over real browser zoom) at 0.8/1.0/1.25/1.5 crossed with
+1280/1440/1920px widths - 12 combinations, zero overlapping pairs in any of
+them, before or after this brief's changes. Per the brief's own escalation
+rule, **#26 is not closed.** What ships regardless is the hardening
+(`flex: 0 0 auto` on every direct child, `white-space: nowrap` on `.cmd-btn`),
+which measurably tightened the row's wrap behaviour even without reproducing
+the reported collision. Asking Fletcher for his window width, browser zoom
+level and Windows display scaling is still the open next step on #26 - two
+sessions now have failed to reproduce it under a fairly wide matrix, which
+is itself evidence worth weighing when he next sees it happen.

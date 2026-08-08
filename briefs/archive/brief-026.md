@@ -1,6 +1,6 @@
 ---
 id: brief-026
-state: ready
+state: complete
 created: 2026-08-08
 updated: 2026-08-08
 agent: user
@@ -298,3 +298,81 @@ list UI, marker rendering, clustering and hover cards. The speed presets row
 - **If the scan turns out to need the panel to stay focused for two minutes**, say
   so - that is a real constraint on a pre-take workflow and it needs writing down
   rather than working around.
+
+## Outcome
+
+**Step 1 did not agree, so the brief ran in full.** Seek-to-end (old method), on
+this session's one available replay: 92 events. A full manual play-through
+from 0 at 4x-then-32x, no seeking: 101 events. Missing from the old method:
+5 `ChampionKill`, 2 `TurretKilled`, 1 `Multikill`, 1 `Ace`. #24's premise
+holds - the client's event feed is not cumulative regardless of where
+playback has been, it only carries what playback has actually passed over.
+Rewrote `scanReplay()` as decided: no seek, one forward pass at the highest
+verified speed, restore everything after.
+
+**Speed ceiling (step 2), measured properly on the second attempt.** The
+first probe run gave `deltaTime: 0` at every speed tested and looked like a
+total failure - the replay was sitting with `time ≈ length` (parked at the
+very end from earlier testing), so nothing could advance regardless of
+speed; the bug was in the probe's setup, not the client. Re-run from a point
+with real runway ahead of it: 4x, 8x, 16x and 32x all reported back correctly
+and advanced within ~1% of `5 × speed` over a 5s window. Shipped `SCAN_SPEED
+= 32` - a 1623s (27min) replay takes roughly 51s to pass, not two minutes.
+
+**Mutex/settle-drop trap (Can't Skip list, `doSeek()`'s own comment)
+respected by not calling `requestSeek()`/`setSpeed()`/`togglePause()` for the
+scan's own start/restore sequences.** Those each open their own
+`withMutex()`; calling one from inside a `withMutex()` block I'm already
+running in deadlocks (the inner call queues behind a queue slot my own
+still-running block occupies). Wrote the start and the restore each as one
+self-contained `withMutex()` sequence using the raw `postPlayback()` /
+`waitForSeekSettled()` primitives directly - pause, seek, wait for settle,
+then speed and pause as absolute writes, never a relative toggle (which
+would have raced `lastPolled.paused` reading its own stale pre-seek value).
+
+**Verified live, restoration exact:** captured a distinctive state before a
+scan (`time:222, speed:2, paused:true`, loop armed A=30/B=40) and confirmed
+it came back byte-for-byte after a completed scan, read from
+`/api/replay/playback` and the loop variables directly, not the chips.
+Cancel mid-scan (clicking the button while `scanInFlight`, which is now
+`cancelScan()` rather than a no-op) restored the pre-scan state within
+seconds, kept the events collected so far, left `harvestDone` false, and
+wrote no cache entry. Progress genuinely updates from the polled time
+(`Scanning… 36%` → `100%`), not a fake timer. The active cue cursor is
+explicitly cleared when a scan starts (**step 7's decision, made and
+stated**: a scan sweeps the whole timeline, so whatever cue was "active"
+before it means nothing about where the playhead now is - same rule
+`requestSeek()` already applies to every other non-cue-navigation seek).
+Event steppers still walk the harvested set in time order afterward.
+`eventsCacheKey()` is versioned (`v2`); reloading after a completed scan
+loads instantly from that cache with no re-scan.
+
+**A finding the brief asked for, and it's a real cost, not a clean win:**
+running the scan repeatedly against the *same still-open* replay client
+(never restarted between test runs this session) produced a *growing* count
+each time - 101, then 106, then 109 - on a game whose real event history
+does not change. Checked whether this is brief 017's known jitter-duplicate
+problem rather than something new: of the 106-event set, 34 pairs share the
+same `EventName` within 2 seconds of each other, most with identical
+killer/victim and sub-second gaps - the exact shape brief 017 already
+documented (same event re-emitted with a new `EventID` and up to ~1s of
+`EventTime` jitter, straddling the 2s dedupe bucket's fixed grid). **I could
+not produce a clean before/after pair-count**, because the old method's raw
+event list wasn't preserved before being overwritten in step 1's own
+measurement - so I can't say precisely whether a *single* pass makes the
+jitter measurably worse than a *single* seek-to-end did. What the repeated-
+scan drift does show is that this replay's client re-emits jittered
+duplicates on *every* pass it's played, old method or new, and a full pass
+is longer exposure to the same mechanism than a two-second settle-poll was.
+This is squarely brief 017's bug, not introduced here, and not fixed here
+per this brief's own scope - but the honest report is that completeness and
+duplicate-noise are in tension, and only the first was this brief's job.
+
+**For #7, the evidence it's been waiting three triage passes for:** zero
+`DragonKill`, `BaronKill`, or `HeraldKill` events across every harvest run
+this session - the 92-event seek-to-end pass, the 101/106/109-event full
+play-throughs, all zero. This is now a materially stronger absence than
+before: the old method could plausibly have missed neutral objectives by
+skipping the parts of the game where they happen, but a full pass that
+still finds none rules that out as the explanation. This does not answer
+#7 - it hands over the one fact that was missing to answer it.

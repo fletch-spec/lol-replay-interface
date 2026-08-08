@@ -1,6 +1,6 @@
 ---
 id: brief-025
-state: ready
+state: complete
 created: 2026-08-08
 updated: 2026-08-08
 agent: user
@@ -217,3 +217,50 @@ A general toast or notification system.
   - i.e. the first click feels like a no-op - say so with a screenshot before
   shipping it. The alternative shapes all cost focus, so this is a real trade and
   Fletcher should see it.
+
+## Outcome
+
+Shipped as decided. Reproduced both symptoms first: `Copy as text` left the
+textarea visible with no dismiss path, `Clear all` deleted with no prompt.
+
+One real tooling wrinkle worth recording: this session's synthetic
+`element.click()` does not carry the transient user activation
+`navigator.clipboard.writeText` needs (confirmed via `document.hasFocus()`
+reading `false` after a synthetic click), so the first pass at verification
+looked like the clipboard call was failing on every click. Switching to the
+Browser pane's `computer` tool (a real dispatched click) fixed it - a
+clipboard-log shim confirmed the write actually succeeds and carries the
+exact `cuesAsText()` output (`"0:50 - gank top\n2:30"`), and the button
+reliably showed the transient label before reverting. This only affects
+*this session's testing method* for the one API that specifically requires
+real activation (window.open() has the same requirement and was tested the
+same way) - `Clear all`'s arm/disarm, being plain click-handler logic, tested
+fine with synthetic clicks and precise in-page timing (checked at 0ms,
+1500ms and 3500ms after arming to nail down the exact disarm boundary,
+since round-trips through the tool made "immediately after" unreliable to
+observe any other way).
+
+All eleven verification steps passed, including the two that mattered most:
+placing a cue while `Clear all` is armed correctly disarms via the
+`disarmClear()` call added to `renderCueList()` (armed → place → text back
+to "Clear all", cues incremented, not deleted; next click re-arms rather
+than deleting) - and two clicks 300ms apart while armed does clear
+everything, disable all three buttons, and write `[]` to `localStorage`
+(not just the in-memory array). Escape was tested on both the
+clipboard-failure fallback and `Export notes`' popup-blocked fallback (same
+element, same handler) - both dismiss and blur correctly. Escape was also
+routed to disarm `Clear all` instead of also firing the pre-existing
+`Escape → loopClear` binding while armed, a call this brief's decision
+section didn't spell out explicitly but the "one keypress, one action"
+precedent from the label/notes fields supports. `document.activeElement`
+stayed on `<body>` throughout every flow tested, and `M`/space fired
+normally afterward.
+
+**Escalation not triggered:** the real (non-stubbed) clipboard write
+succeeded on the actual click path in this browser - brief's stop condition
+was a genuine failure there, which did not happen. **Escalation partially
+open:** could not screenshot the armed red button to confirm it reads as
+protective rather than broken (the Browser pane still can't composite
+frames), so that half of the brief's ask is judged from DOM state and the
+established `--bad` color convention, not a look. Flagging rather than
+claiming a full pass on that one point.
