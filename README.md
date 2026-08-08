@@ -8,11 +8,14 @@ single pass while OBS captures the game.
 stats tool. If a feature doesn't help someone talk over a replay in real time,
 it's out.
 
-![The panel: status bar with camera distance and cinematic controls, both team
-rosters, transport controls, the scrub bar with event markers, the event list,
-and the Cues card below it](docs/panel.png)
+![The panel: a status bar with connection chips, camera distance and a combined
+Cinematic/Setup control; both team rosters; the transport row with the seek
+buttons flanking Pause, speed presets and the event steppers; the scrub bar with
+its event marker gutter and legend; the event list rail; and the Cues card
+below](docs/panel.png)
 
-*Summoner names are replaced with placeholders in this screenshot.*
+*Summoner names are replaced with placeholders in this screenshot - that's the
+`Show names` toggle.*
 
 ## Quick start
 
@@ -50,18 +53,31 @@ npm start
 
 ## What it does
 
-- **Transport** - scrub, pause, speed presets, frame-accurate nudging
-- **Event timeline** - kills, objectives and structures as markers on the scrub
-  bar, clustered by lane, champion portraits on hover, click to seek
+- **Transport** - scrub, pause, speed presets, frame-accurate nudging. The seek
+  buttons flank Pause so they point the way they move.
+- **Event timeline** - kills, neutral objectives and structures as markers on
+  the scrub bar. Category owns the lane and the shape, team owns the colour;
+  events close together collapse into one counted marker, and hovering any of
+  them lists every event inside it, each row seeking to its own timestamp.
+- **Event harvest** - `Scan replay` plays the replay through once at high speed
+  to collect the full event list, then restores your playhead, speed and pause
+  state exactly. Results are cached per replay, so it's a one-time cost. Until
+  you run it the panel says `not scanned` rather than pretending a quiet
+  timeline is a quiet game.
 - **Cue points** - one key drops a cue at the playhead, another steps through
   them, each landing paused a couple of seconds early so you can set the moment
-  up verbally. Notes persist per replay and export as `MM:SS - note` for
-  YouTube chapters.
+  up verbally. Notes persist per replay. `Copy as text` puts `MM:SS - note`
+  YouTube chapters straight on the clipboard; `Export notes` opens the full
+  notes as markdown.
 - **A/B loop** - mark a section and loop it while you re-record a line
 - **Camera** - lock the camera to any champion and follow them, with a distance
   slider
 - **HUD** - one-press cinematic mode, or toggle any individual HUD element
 - Every action has both a button and a keyboard shortcut
+
+Built and verified against Chromium - Chrome, Brave, Edge or Opera. Other
+engines mostly work; they aren't tested, and the known gaps are in
+[Issues](../../issues).
 
 ## Documentation
 
@@ -88,6 +104,7 @@ app/public/        single-file panel, vanilla JS, no build step
 briefs/            the specs this was built from, with outcomes
 docs/sessions/     one log per working session, with measured stats
 tools/             repo scripts (session-stats.js reads a session transcript)
+.claude/skills/    the entry points to the brief and session process
 ```
 
 ⚠️ **`cameraMode: "tps"` closes the game.** Reproduced twice. Don't send it.
