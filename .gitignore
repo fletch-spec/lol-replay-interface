@@ -5,6 +5,11 @@ node_modules/
 # of Riot's art that goes stale every patch.
 app/cache/
 
-# Local Claude Code state; launch.json is kept (see below).
+# Local Claude Code state. launch.json and skills/ are project process, not
+# local state - the skills are the invocable entry points to briefs/TRIAGE.md
+# and the session-log convention, and a fresh clone that lost them would lose
+# how this repo is worked. Everything else here (settings.local.json, caches,
+# transcripts) stays local.
 .claude/*
 !.claude/launch.json
+!.claude/skills/
