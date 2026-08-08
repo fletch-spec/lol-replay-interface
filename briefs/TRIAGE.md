@@ -104,11 +104,18 @@ expensive to catch at build time. Say it in the brief and in the log.
   reasoning`. Long lines are correct. This file is the only place the *why*
   survives.
 - Update `PASSOFF.md`'s queue line and its "Updated" date.
-- Ask before commenting on issues, pushing, or touching the wiki. The
-  convention when granted: a `Triaged into brief-0NN` comment on each issue, and
-  the wiki queue table and Stats updated in the same pass. The wiki is a separate
-  repo (`fletch-spec/lol-replay-interface.wiki.git`) - clone it fresh, push it
-  separately.
+- **Commit and push before you stop.** A triage pass ends with a clean working
+  tree and `origin/main` up to date - `git status --short` and
+  `git log --oneline origin/main..main` both empty. Standing instruction from
+  Fletcher (2026-08-08): GitHub is the source of truth, and nothing this pass
+  produced may exist only on the machine it ran on.
+- **Close the issues whose work has shipped**, with a comment naming the brief
+  that closed them and what it found. Leave anything partial open and say why in
+  the report. Also fine without asking: a `Triaged into brief-0NN` comment on
+  each issue you briefed.
+- The wiki queue table and Stats are updated in the same pass. The wiki is a
+  separate repo (`fletch-spec/lol-replay-interface.wiki.git`) - clone it fresh,
+  push it separately.
 
 ## Rules that came from getting it wrong
 
@@ -139,8 +146,20 @@ expensive to catch at build time. Say it in the brief and in the log.
 - **No code.** Not even the one-liner you can see from here. The brief's job is
   to be executed by a session that reads it cold; a half-applied fix makes its
   line anchors lie.
-- **No pushing, no issue comments, no wiki edits** without being asked. Explicit
-  "push gh" covers the main repo and the wiki in the same turn.
-- **No closing issues.** Recommend it; the call is the user's. The `wontfix`
-  constraint records (#9, #10) have been recommended for closing twice now and
-  are still open, which is a fine outcome - they cost nothing and they are read.
+
+## What triage now does, that it used to ask about
+
+Both of these reversed on 2026-08-08, on Fletcher's explicit instruction. The old
+rules were "no pushing, no issue comments, no wiki edits without being asked" and
+"no closing issues - recommend, the call is the user's".
+
+- **Push.** Triage commits and pushes its own output. The old rule produced a day
+  where five shipped briefs, a UI overhaul and a whole triage pass sat in one
+  working tree, invisible to GitHub. If GitHub does not have it, it does not
+  exist.
+- **Close the issues whose work has shipped**, with a comment naming the brief.
+  Partial work stays open with the residue named - #13 stayed open when brief 017
+  fixed two of five duplicate pairs, and that was right.
+
+Still ask about: anything that changes an issue's *meaning* rather than its
+state - reopening, relabelling, or closing something as `wontfix`.

@@ -12,10 +12,12 @@ prompt only has to set the frame and the gates.
 inside the League client by hand, which no session can do; it stays in `ready/`
 as a record. Start at 027 unless Fletcher has run that toggle.
 
-**Nothing from the 022-026 session is committed.** All five briefs' code plus a
-timeline-controls UI overhaul sit uncommitted in the working tree, so 027-030's
-line numbers are from commit `943760b` *plus* those changes. Each brief says so
-at the top.
+**Everything is committed and pushed** as of `db827c1` - briefs 022-026's code,
+the timeline-controls UI overhaul, and this queue. 027-030's headers name
+`943760b` plus uncommitted changes because that is what they were written
+against; `db827c1` is the same content, so grep the symbol and move on. From now
+on nothing stays in the working tree between sessions: wraps and triage passes
+both push, and GitHub is the source of truth.
 
 027-030 came from the fourth triage pass: 027 finishes #13's dedupe (the 2s
 bucket is a fixed grid, so its real tolerance is 0-2s depending where a pair
@@ -33,8 +35,9 @@ measurement or computed-colour math instead (see briefs 018 and 019's Outcomes).
 Three things stay blocked on Fletcher rather than on work: **#26** (transport-row
 overlap - two sessions have failed to reproduce it across a width sweep and a
 zoom × width matrix, needs his window width, browser zoom and Windows display
-scaling), **#32** (a Firefox-only separator, `wontfix` by his instruction, may
-already be fixed by the uncommitted CSS Grid rewrite), and **#7**
+scaling), **#32** (a Firefox-only separator, `wontfix`, and now parked for a
+different reason - Fletcher is moving to Brave/Opera, so Chromium is the target
+and cross-browser support is a later goal), and **#7**
 (dragon/baron/herald - every replay available so far has had zero neutral
 objective events of any kind, which briefs 019 and 026 both flagged as evidence
 without deciding it; #14's empty-lane residue rides with it). **#31** (OBS LAN
@@ -89,6 +92,10 @@ Work ONE brief at a time, in four stages:
   anything in the brief turned out wrong - API shape, an assumption, a mechanism
   that doesn't work - write an Outcome section into the archived brief saying
   what actually happened. That matters more than a clean "done".
+  Then close the brief's issue with a comment naming what shipped, and COMMIT
+  AND PUSH. `git status --short` and `git log --oneline origin/main..main` both
+  come back empty before you stop. GitHub is the source of truth - nothing stays
+  on this machine.
   → STOP. Don't start the next brief without my go-ahead.
 
 Notes on working the briefs:
@@ -99,6 +106,14 @@ Notes on working the briefs:
   for field names (the /docs HTML page 404s on curl). Everything is reachable
   through the panel's own proxy at http://localhost:3000/api/..., which avoids
   the self-signed cert.
+- Target Chromium. I was on Firefox and two rendering divergences cost most of a
+  session (#32's font-fallback glyphs, and Mozilla #1179454 breaking `flex: 1 0 0`
+  items whose content is a nested flex container). I can run Brave or Opera, both
+  Chromium, so build and verify against Chromium - which is also what your Browser
+  pane is. Broader browser support is a real goal for later, not now; don't spend
+  a session on a Firefox-only rendering bug. Prefer Grid, container queries and
+  drawn glyphs over nested flex sizing and font characters anyway - that's just
+  better CSS.
 - Each brief has an "Escalate Instead Of Deciding" section. Use it.
 
 Start at Stage 1 for brief 027.
