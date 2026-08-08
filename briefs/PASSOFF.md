@@ -3,33 +3,44 @@
 Paste once at session start. One session works the queue in order, one brief at
 a time, stopping at the stage gates.
 
-Updated 2026-08-08 (second pass, after the screenshot triage): 001-011, 013-020
-done, 012 cut. Queue is **021 → 022 → 023 → 024 → 025 → 026**. Briefs are verbose
-and self-contained - each carries its own decisions, code anchors, steps,
-verification and traps - so this prompt only has to set the frame and the gates.
+Updated 2026-08-08 (fourth pass): 001-011, 013-020, 022-026 done, 012 cut. Queue
+is **027 → 028 → 029 → 030**. Briefs are verbose and self-contained - each
+carries its own decisions, code anchors, steps, verification and traps - so this
+prompt only has to set the frame and the gates.
 
-**021 is blocked, not next.** It needs streamer mode toggled inside the League
-client by hand, which no session can do; it stays at the head of the queue as a
-record. Start at 022 unless Fletcher has run that toggle.
+**021 is blocked and out of the running order.** It needs streamer mode toggled
+inside the League client by hand, which no session can do; it stays in `ready/`
+as a record. Start at 027 unless Fletcher has run that toggle.
 
-022-026 came from a screenshot Fletcher annotated with ten numbered complaints,
-filed as issues #18-#27. They are grouped by UI region, not one per issue: 022
-and 023 both edit the status bar (chrome first, then the chips - run them in that
-order), 024 owns the transport control row, 025 owns the cue action buttons, 026
-rewrites the event harvest. 026 is measurement-first and its step 1 is allowed to
-end the brief.
+**Nothing from the 022-026 session is committed.** All five briefs' code plus a
+timeline-controls UI overhaul sit uncommitted in the working tree, so 027-030's
+line numbers are from commit `943760b` *plus* those changes. Each brief says so
+at the top.
 
-Brief 017 (event labels + dedupe) is done but partial - the 2s dedupe bucket
-still misses some jittered duplicate pairs that straddle its fixed grid
-boundary (3 of 5 known cases). Brief 019 shipped the diamond fallback for
-kill markers, not the X, for the same reason: this session's Browser pane
-does not composite frames - `computer` screenshots time out - so any brief
-needing pixel verification has to say so and rely on DOM measurement or
-computed-colour math instead (see briefs 018 and 019's Outcomes). #7
-(dragon/baron/herald audit) is still blocked - every replay available this
-session has had zero neutral objective events of any kind, which brief 019
-flagged as evidence for #7 without deciding it. See `TRIAGE.md` for how this
-queue was filled.
+027-030 came from the fourth triage pass: 027 finishes #13's dedupe (the 2s
+bucket is a fixed grid, so its real tolerance is 0-2s depending where a pair
+lands - 3 known pairs still survive, and brief 026's full play-through made
+repeated scans grow 101 → 106 → 109), 028 is the setup caret, 029 is the hover
+dead zone over a wide cluster's count digit, 030 is panel scaling. Run them in
+that order: 027 changes the cluster counts 029 and 030 both measure against, and
+029 and 030 share the marker gutter - 029 owns where the hit test thinks a marker
+is, 030 owns where its box is, so 030 re-runs 029's sweep as a step.
+
+Brief 019 shipped the diamond fallback for kill markers, not the X, because this
+session's Browser pane does not composite frames - `computer` screenshots time
+out - so any brief needing pixel verification has to say so and rely on DOM
+measurement or computed-colour math instead (see briefs 018 and 019's Outcomes).
+Three things stay blocked on Fletcher rather than on work: **#26** (transport-row
+overlap - two sessions have failed to reproduce it across a width sweep and a
+zoom × width matrix, needs his window width, browser zoom and Windows display
+scaling), **#32** (a Firefox-only separator, `wontfix` by his instruction, may
+already be fixed by the uncommitted CSS Grid rewrite), and **#7**
+(dragon/baron/herald - every replay available so far has had zero neutral
+objective events of any kind, which briefs 019 and 026 both flagged as evidence
+without deciding it; #14's empty-lane residue rides with it). **#31** (OBS LAN
+stream in-browser) has an empty body and no brief - it needs a written premise
+before the scope test can be applied to it. See `TRIAGE.md` for how this queue
+was filled.
 
 ---
 
@@ -39,9 +50,9 @@ that drives League replays on a second monitor so I can record voiceover live in
 one pass. Live replay control only - not an editor, not a stats tool. If a
 feature doesn't help someone talk over a replay in real time, it's out.
 
-Queue:   C:\dev\lol-replay-interface\briefs\ready\   (order: 021 → 022 → 023 → 024 → 025 → 026;
-         021 is blocked on a physical client toggle - start at 022)
-Archive: C:\dev\lol-replay-interface\briefs\archive\ (001-020, read the Outcome sections)
+Queue:   C:\dev\lol-replay-interface\briefs\ready\   (order: 027 → 028 → 029 → 030;
+         021 also sits here, blocked on a physical client toggle - skip it)
+Archive: C:\dev\lol-replay-interface\briefs\archive\ (001-020, 022-026, read the Outcome sections)
 Code:    C:\dev\lol-replay-interface\app\ - Node helper (server.js) + single-file
          vanilla-JS panel (public/index.html). No build step. Windows.
 
@@ -81,15 +92,16 @@ Work ONE brief at a time, in four stages:
   → STOP. Don't start the next brief without my go-ahead.
 
 Notes on working the briefs:
-- Line numbers in briefs are from commit e8e05b9 and will drift. Symbol names
-  are stable - grep for those.
+- Line numbers in briefs 027-030 are from commit 943760b PLUS the uncommitted
+  022-026 changes in the working tree, and will drift. Symbol names are stable -
+  grep for those.
 - The swagger at https://127.0.0.1:2999/swagger/v3/openapi.json is authoritative
   for field names (the /docs HTML page 404s on curl). Everything is reachable
   through the panel's own proxy at http://localhost:3000/api/..., which avoids
   the self-signed cert.
 - Each brief has an "Escalate Instead Of Deciding" section. Use it.
 
-Start at Stage 1 for brief 022.
+Start at Stage 1 for brief 027.
 ```
 
 ---
