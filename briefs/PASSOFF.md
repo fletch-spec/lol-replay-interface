@@ -4,9 +4,18 @@ Paste once at session start. One session works the queue in order, one brief at
 a time, stopping at the stage gates.
 
 Updated 2026-08-08 (fourth pass): 001-011, 013-020, 022-026 done, 012 cut. Queue
-is **027 → 028 → 029 → 030**. Briefs are verbose and self-contained - each
+is **031 → 027 → 028 → 029 → 030**. Briefs are verbose and self-contained - each
 carries its own decisions, code anchors, steps, verification and traps - so this
 prompt only has to set the frame and the gates.
+
+**031 runs first even though its number is last**, and that is deliberate rather
+than an oversight. It tests driving the panel from a second machine over the LAN
+- the control half of #31, which Fletcher has put ahead of the video card - and
+it is cheap, it gates that feature, and it may change what "the panel's origin"
+means for work the others assume. 027-030 were already written and pushed;
+`TRIAGE.md`'s rule is that renumbering costs more than the problem it solves, so
+the exception is documented instead of the numbers being churned. It is the only
+one in the queue.
 
 **021 is blocked and out of the running order.** It needs streamer mode toggled
 inside the League client by hand, which no session can do; it stays in `ready/`
@@ -41,9 +50,9 @@ and cross-browser support is a later goal), and **#7**
 (dragon/baron/herald - every replay available so far has had zero neutral
 objective events of any kind, which briefs 019 and 026 both flagged as evidence
 without deciding it; #14's empty-lane residue rides with it). **#31** (OBS LAN
-stream in-browser) has an empty body and no brief - it needs a written premise
-before the scope test can be applied to it. See `TRIAGE.md` for how this queue
-was filled.
+stream in-browser) now has its premise and its research on the issue: the control
+half is brief 031 and runs first, the video card is backlogged behind it. See
+`TRIAGE.md` for how this queue was filled.
 
 ---
 
@@ -53,8 +62,9 @@ that drives League replays on a second monitor so I can record voiceover live in
 one pass. Live replay control only - not an editor, not a stats tool. If a
 feature doesn't help someone talk over a replay in real time, it's out.
 
-Queue:   C:\dev\lol-replay-interface\briefs\ready\   (order: 027 → 028 → 029 → 030;
-         021 also sits here, blocked on a physical client toggle - skip it)
+Queue:   C:\dev\lol-replay-interface\briefs\ready\   (order: 031 → 027 → 028 → 029 → 030
+         - 031 is first despite its number, see its header; 021 also sits here,
+         blocked on a physical client toggle - skip it)
 Archive: C:\dev\lol-replay-interface\briefs\archive\ (001-020, 022-026, read the Outcome sections)
 Code:    C:\dev\lol-replay-interface\app\ - Node helper (server.js) + single-file
          vanilla-JS panel (public/index.html). No build step. Windows.
