@@ -76,7 +76,8 @@ Everything lives in the [wiki](../../wiki):
 
 Open problems are in [Issues](../../issues). The specs this was built from are in
 [`briefs/`](briefs/), each with an Outcome section recording what actually
-happened.
+happened. [`docs/sessions/`](docs/sessions/) logs each working session - goal,
+outcome, what was left open, and measured stats.
 
 ## Layout
 
@@ -85,6 +86,8 @@ run.bat            start here
 app/server.js      Node helper - proxies the client API, pushes state over WS
 app/public/        single-file panel, vanilla JS, no build step
 briefs/            the specs this was built from, with outcomes
+docs/sessions/     one log per working session, with measured stats
+tools/             repo scripts (session-stats.js reads a session transcript)
 ```
 
 ⚠️ **`cameraMode: "tps"` closes the game.** Reproduced twice. Don't send it.

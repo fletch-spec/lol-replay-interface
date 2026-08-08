@@ -3,10 +3,21 @@
 Paste once at session start. One session works the queue in order, one brief at
 a time, stopping at the stage gates.
 
-Updated 2026-08-08: 001-011, 013-020 done, 012 cut. Queue is
-021 (last one). Briefs are verbose and self-contained - each
-carries its own decisions, code anchors, steps, verification and traps - so
-this prompt only has to set the frame and the gates.
+Updated 2026-08-08 (second pass, after the screenshot triage): 001-011, 013-020
+done, 012 cut. Queue is **021 → 022 → 023 → 024 → 025 → 026**. Briefs are verbose
+and self-contained - each carries its own decisions, code anchors, steps,
+verification and traps - so this prompt only has to set the frame and the gates.
+
+**021 is blocked, not next.** It needs streamer mode toggled inside the League
+client by hand, which no session can do; it stays at the head of the queue as a
+record. Start at 022 unless Fletcher has run that toggle.
+
+022-026 came from a screenshot Fletcher annotated with ten numbered complaints,
+filed as issues #18-#27. They are grouped by UI region, not one per issue: 022
+and 023 both edit the status bar (chrome first, then the chips - run them in that
+order), 024 owns the transport control row, 025 owns the cue action buttons, 026
+rewrites the event harvest. 026 is measurement-first and its step 1 is allowed to
+end the brief.
 
 Brief 017 (event labels + dedupe) is done but partial - the 2s dedupe bucket
 still misses some jittered duplicate pairs that straddle its fixed grid
@@ -28,7 +39,8 @@ that drives League replays on a second monitor so I can record voiceover live in
 one pass. Live replay control only - not an editor, not a stats tool. If a
 feature doesn't help someone talk over a replay in real time, it's out.
 
-Queue:   C:\dev\lol-replay-interface\briefs\ready\   (order: 021)
+Queue:   C:\dev\lol-replay-interface\briefs\ready\   (order: 021 → 022 → 023 → 024 → 025 → 026;
+         021 is blocked on a physical client toggle - start at 022)
 Archive: C:\dev\lol-replay-interface\briefs\archive\ (001-020, read the Outcome sections)
 Code:    C:\dev\lol-replay-interface\app\ - Node helper (server.js) + single-file
          vanilla-JS panel (public/index.html). No build step. Windows.
@@ -77,7 +89,7 @@ Notes on working the briefs:
   the self-signed cert.
 - Each brief has an "Escalate Instead Of Deciding" section. Use it.
 
-Start at Stage 1 for brief 021.
+Start at Stage 1 for brief 022.
 ```
 
 ---
