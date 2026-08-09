@@ -1,8 +1,8 @@
 ---
 id: brief-032
 state: ready
-created: 2026-08-09
-updated: 2026-08-09
+created: 2026-08-10
+updated: 2026-08-10
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: []
@@ -16,7 +16,7 @@ branch: brief/032
 
 Closes [#33](https://github.com/fletch-spec/lol-replay-interface/issues/33).
 
-> Filed 2026-08-09 on Fletcher's go-ahead, after the brief was written. It came
+> Filed 2026-08-10 on Fletcher's go-ahead, after the brief was written. It came
 > from a process pass rather than a defect, and it is the first issue this queue
 > has opened on its own behalf.
 

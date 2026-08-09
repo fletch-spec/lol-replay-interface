@@ -9,7 +9,7 @@ made the design calls and wrote the traps, and `REVIEW.md` will judge the result
 If this session finds itself designing, something upstream was underspecified;
 say so in the report rather than filling the gap quietly.
 
-**Report-gated, not stage-gated** (changed 2026-08-09). The old version stopped
+**Report-gated, not stage-gated** (changed 2026-08-10). The old version stopped
 four times per brief for a human go-ahead. Each resume re-cached a fully loaded
 context, and the 2026-08-08 session established that running straight through
 works - it shipped five briefs under a standing "don't stop for stages unless
@@ -19,7 +19,7 @@ capped, both are schemas, and a reviewer reads them for a fraction of what a
 conversational stop costs. Fletcher's own test moves to *after* review, where it
 is the last word instead of the third interruption.
 
-Updated 2026-08-09: 001-011, 013-020, 022-026 done, 012 cut. Queue is
+Updated 2026-08-10: 001-011, 013-020, 022-026 done, 012 cut. Queue is
 **031 → 032 → 027 → 028 → 029 → 030**. Briefs are verbose and self-contained -
 each carries its own decisions, code anchors, steps, verification and traps - so
 this prompt only has to set the frame and the handoff.

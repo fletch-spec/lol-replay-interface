@@ -190,7 +190,7 @@ What is left here is what belongs to the queue.*
 - **No code.** Not even the one-liner you can see from here. The brief's job is
   to be executed by a session that reads it cold; a half-applied fix makes its
   line anchors lie.
-- **No briefs.** Since 2026-08-09. Triage that also authors has to hold every
+- **No briefs.** Since 2026-08-10. Triage that also authors has to hold every
   issue and every brief's line anchors in one context, and that context is
   re-read on every turn for the rest of the session. Commission it and let an
   `AUTHOR.md` session open the code for one brief at a time.
