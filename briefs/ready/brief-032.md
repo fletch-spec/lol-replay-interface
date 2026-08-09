@@ -14,8 +14,11 @@ branch: brief/032
 
 # Brief 032: Three Files Instead Of One, Without Changing A Line Of Behaviour
 
-No issue - this one came from a process pass, not a defect. File it before
-closing (see `Escalate Instead Of Deciding`).
+Closes [#33](https://github.com/fletch-spec/lol-replay-interface/issues/33).
+
+> Filed 2026-08-09 on Fletcher's go-ahead, after the brief was written. It came
+> from a process pass rather than a defect, and it is the first issue this queue
+> has opened on its own behalf.
 
 > Line numbers are from commit `260a170`. If they don't match, grep for the
 > symbol name - the names are stable, the lines are not.
@@ -286,11 +289,6 @@ in Chromium. Steps 1-5 need no replay; 6-8 need one loaded.
 
 ## Escalate Instead Of Deciding
 
-- **There is no GitHub issue for this brief.** File one before review closes it -
-  the queue's own rule is that GitHub is the source of truth, and a brief with no
-  issue is a change with no public record. Ask Fletcher before filing, since it
-  is the first issue this process has opened on its own behalf rather than
-  triaged from one he wrote.
 - **If step 4 finds more than ~15 bindings assigned from two or more groups**,
   stop and report rather than reasoning ahead about brief 033. That count is the
   difference between "each module keeps its own state" and "the panel needs a
