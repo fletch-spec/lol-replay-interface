@@ -1,10 +1,24 @@
-# Triage: Issues Into Briefs
+# Triage: Issues Into Commissions
 
-`PASSOFF.md` covers *running* the queue. This covers *filling* it.
+Four documents, four roles, one brief moving between them:
 
-Run this when open issues have piled up and the queue is empty or thin. It ends
-with executable briefs in `briefs/ready/`, a queue order, and a log entry per
-decision. It never touches `app/`.
+| Doc | Role | Model | Turns | Into |
+|---|---|---|---|---|
+| **`TRIAGE.md`** | Project manager | Opus | open issues | commissions + a queue order |
+| `AUTHOR.md` | Senior | Opus | one commission | one brief in `ready/` |
+| `PASSOFF.md` | Junior | Sonnet | one brief | a plan, a branch, a report |
+| `REVIEW.md` | Reviewer | Opus | one report | a verdict, an Outcome, a merge |
+
+This is the first. Run it when open issues have piled up and the queue is empty
+or thin. It ends with a commission per brief, a queue order with lanes, and a log
+entry per decision. It never touches `app/`, and it no longer writes the briefs
+themselves - that is `AUTHOR.md`, and the split exists for a measured reason.
+
+**Why the split.** Dispositioning every open issue and authoring every brief in
+one session means holding every issue *and* every brief's code anchors in one
+context, which is the most expensive session shape this project runs. Separated,
+triage reads issues and greps mechanisms; authoring opens code for exactly one
+brief and `/clear`s between. Same output, a fraction of the resident context.
 
 ---
 
@@ -18,10 +32,13 @@ it's out.
 
 Repo:     C:\dev\lol-replay-interface
 Briefs:   briefs/ready/ (queue), briefs/archive/ (done - read the Outcome
-          sections), briefs/template.md (shape), briefs/brief_log.md (why)
+          sections), briefs/template.md (shape)
+Log:      briefs/brief_log.md (why). Grep it, don't read it - 75KB and growing.
 Process:  briefs/TRIAGE.md - follow it.
 
-Don't write code. Don't push or comment on GitHub without me saying so.
+You produce commissions, not briefs. briefs/AUTHOR.md writes those, one session
+per brief. Don't write code. Don't push or comment on GitHub without me saying
+so.
 ```
 
 ---
@@ -39,19 +56,25 @@ Don't write code. Don't push or comment on GitHub without me saying so.
   be wrong, which is more useful than what shipped.
 - `PASSOFF.md`'s five facts. Any brief that contradicts one is wrong.
 
-**2. Open the code for every issue.**
+**2. Open the code far enough to disposition, and no further.**
 
-Non-negotiable, and the step most worth resisting the urge to skip. A brief
-written without reading the code produces the "find out what `cameraLockX` does"
+Non-negotiable, and the step most worth resisting the urge to skip. A disposition
+written without touching the code produces the "find out what `cameraLockX` does"
 shape - briefs 008, 009 and 010 were all written that way and all had to be
 rewritten verbose before they could be executed. The rewrite cost more than the
 reading would have.
 
-You are looking for: the symbol that owns the behaviour, the line that already
-explains why it is like that, and the mechanism behind the symptom. Issue #15
-went from "popup gets cut off" to "`.transport.card` sets `overflow: hidden` and
-the card grows upward out of it" in one grep, and that turned a design discussion
-into a decision.
+But triage needs a different depth than authoring does, and conflating the two is
+what made this doc expensive. **Triage needs the mechanism; authoring needs the
+line.** One grep for the symbol that owns the behaviour is usually the whole
+budget. Issue #15 went from "popup gets cut off" to "`.transport.card` sets
+`overflow: hidden` and the card grows upward out of it" in one grep, and that
+turned a design discussion into a decision - without a line table, which the
+authoring session builds fresh against a named commit anyway.
+
+If you cannot tell whether something is actionable without a full read, that
+uncertainty is itself the disposition: commission it as a measurement-first
+brief and let step 1 answer it, the way briefs 021, 026 and 031 do.
 
 **3. Apply the scope test, out loud, per issue.**
 
@@ -72,38 +95,68 @@ verdict in the log line even when the answer is obviously "keep".
 | **Cut** | Fails the scope test | A log entry saying why, with the reasoning that will otherwise be re-derived |
 | **Reframed** | Belongs inside another brief, or is really two issues | A note in both, and a log line |
 
-**5. Write the briefs.** `briefs/template.md` is the shape. The two sections that
-decide whether a brief is finished:
+**5. Commission the briefs.** One paragraph per `Brief` disposition, handed to an
+`AUTHOR.md` session. A commission carries four things and nothing else:
 
-- **Decision (already made - do not re-litigate)** - state the approach as a
-  decision, then list the rejected alternatives *with the reason each lost*. A
-  brief that offers a menu hands its hardest problem to the session least
-  equipped to solve it, and you will get a different answer than you wanted.
-- **Where The Code Is** - a table of real symbols and real line numbers from a
-  named commit. Note the commit at the top; line numbers drift, symbol names do
-  not.
+- **The mechanism**, as step 2 found it - not the symptom the issue reported.
+- **The fence**: what this brief must not absorb, and which brief owns it
+  instead. This is the half a commission uniquely can supply, because only triage
+  has seen all the issues at once.
+- **The proposed `owns:` lane**, from step 6. The author may widen it after
+  reading the code; they may not narrow it without saying so.
+- **Anything already known to be wrong** about the issue as filed.
 
-Then: `Done when:` on every step, checkable without judgement. Verification as
-numbered steps against the live app, including the negative cases. Traps as
-concrete things in *this* code, not general advice. `Escalate Instead Of
-Deciding` for anything genuinely open - that is where an open question belongs,
-never in Decision.
+You are not making the design decision - that is the author's job, and making it
+here without the line-level reading is how a brief gets a Decision its own code
+does not support. You are making sure the author cannot accidentally re-open a
+question the queue already settled.
 
-**6. Order the queue.** Dependencies first, then cheapest-or-most-informative.
-Keep numeric order equal to execution order - renumbering is worse than the
-problem it solves, so pick the numbers after you have the order.
+Commissions live in the log line, not in a file of their own. A commission that
+needs its own file is a brief, and you are not writing those.
+
+**6. Order the queue, then cut it into lanes.** Dependencies first, then
+cheapest-or-most-informative. Keep numeric order equal to execution order -
+renumbering is worse than the problem it solves, so pick the numbers after you
+have the order.
 
 Then check for **collisions**: two briefs that own the same UI region or the same
 function. Briefs 011 and 013 both wanted the cue row and whichever ran second
 would have inherited the other's layout. That is cheap to catch here and
-expensive to catch at build time. Say it in the brief and in the log.
+expensive to catch at build time. Say it in the commission and in the log.
+
+Collisions used to be a warning. Now they are arithmetic, because two executing
+sessions run at once:
+
+> **Two briefs may run in parallel only if their `owns:` sets are disjoint.**
+
+So the queue is not a line, it is a set of lanes. Publish it as one - the queue
+line in `PASSOFF.md` names which briefs may run concurrently and which must not:
+
+```
+Queue: 031 -> 027 -> 028 -> 029 -> 030
+Lanes: 031 (server, boot) may run beside any of them.
+       027 (event dedupe) then 029 -> 030 (marker gutter, shared) in order.
+       028 (setup caret) is disjoint from all of the above.
+```
+
+Two rules that fall out of it, both learned the expensive way rather than
+reasoned from first principles:
+
+- **A brief that owns a whole file blocks the lane.** While `app/public/index.html`
+  is one 140KB file, almost everything collides with almost everything, and the
+  second executing session mostly idles. An idle session costs nothing; two
+  sessions rebasing the same file costs a rebuild. Do not manufacture
+  parallelism the code does not support.
+- **Depth beats width when the lanes are narrow.** If only one brief can run,
+  run one. The second Sonnet session is better spent on the *next* brief's plan
+  than on a colliding build.
 
 **7. Write it down.**
 
 - One line per decision in `brief_log.md`: `date | brief-NNN | from -> to |
-  reasoning`. Long lines are correct. This file is the only place the *why*
-  survives.
-- Update `PASSOFF.md`'s queue line and its "Updated" date.
+  reasoning`, and the commission itself for anything dispositioned `Brief`. Long
+  lines are correct. This file is the only place the *why* survives.
+- Update `PASSOFF.md`'s queue line, its lane block, and its "Updated" date.
 - **Commit and push before you stop.** A triage pass ends with a clean working
   tree and `origin/main` up to date - `git status --short` and
   `git log --oneline origin/main..main` both empty. Standing instruction from
@@ -119,19 +172,10 @@ expensive to catch at build time. Say it in the brief and in the log.
 
 ## Rules that came from getting it wrong
 
-- **A brief that defers its design decisions is not finished.** This is the whole
-  reason `PASSOFF.md` shrank from ninety lines to four stage gates - judgement
-  moved from the session into the brief.
-- **Do not invent strings from memory.** Champion aliases, `EventName`s, minion
-  prefixes. A wrong mapping fails silently and looks fine, which is worse than a
-  visible 404. Instruct the brief to collect real values by logging them first
-  (brief 011).
-- **State the gate, and let the brief fail it honestly.** Brief 015 said "one row
-  of ten cards, at 1400px, with a legibility gate", measured 37px for a champion
-  name, and shipped the documented two-row fallback. Both outcomes passed. That
-  is better than a brief that can only succeed.
-- **The absence of a finding is not a finding.** Brief 010's insight, and it is
-  why #7 is still open rather than answered.
+*The rules about how a brief is written moved to `AUTHOR.md` with the writing -
+deferred decisions, invented strings, stated gates, and the absence of a finding.
+What is left here is what belongs to the queue.*
+
 - **When a new issue reverses a fence an earlier scope review set, surface it.**
   Do not absorb it as a sub-bullet. Issue #12 asks for cue tags, which brief 013
   explicitly barred; that reversal is the user's to make deliberately, so brief
@@ -146,6 +190,12 @@ expensive to catch at build time. Say it in the brief and in the log.
 - **No code.** Not even the one-liner you can see from here. The brief's job is
   to be executed by a session that reads it cold; a half-applied fix makes its
   line anchors lie.
+- **No briefs.** Since 2026-08-09. Triage that also authors has to hold every
+  issue and every brief's line anchors in one context, and that context is
+  re-read on every turn for the rest of the session. Commission it and let an
+  `AUTHOR.md` session open the code for one brief at a time.
+- **No verdicts.** A shipped brief's Outcome belongs to `REVIEW.md`. Triage reads
+  Outcomes; it does not write them.
 
 ## What triage now does, that it used to ask about
 

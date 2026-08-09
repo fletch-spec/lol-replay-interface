@@ -8,7 +8,23 @@ project: LOL-REPLAY-CONTROLLER
 depends_on: []
 executes_after: brief-NNN
 model: sonnet
+owns: []
+branch: brief/NNN
 ---
+
+> **Frontmatter that is load-bearing, not decoration.**
+>
+> `model:` - `sonnet` if the decisions are made and the steps are mechanical,
+> `opus` if the work needs judgement that could not be pre-made. Set by the
+> authoring session; see `AUTHOR.md` step 5. A brief is not made `sonnet` by
+> being written shorter.
+>
+> `owns:` - the regions, files or symbols this brief will modify. **Two briefs
+> may run in parallel only if their `owns:` sets are disjoint.** Be generous:
+> under-declaring costs a rebuild, over-declaring costs a wait.
+>
+> `branch:` - executing sessions work on `brief/NNN` and push it. `main` is
+> merged by the reviewing session, so two executing sessions never race for it.
 
 # Brief NNN: {Title}
 
