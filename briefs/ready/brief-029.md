@@ -14,10 +14,11 @@ model: sonnet
 
 Closes [#28](https://github.com/fletch-spec/lol-replay-interface/issues/28).
 
-> Line numbers in this brief are from commit `943760b` **plus the uncommitted
-> briefs 022-026 changes sitting in the working tree** - nothing from that
-> session is committed yet. If the numbers don't match, grep for the symbol
-> name; the names are stable, the lines are not.
+> Line numbers in this brief's `Where The Code Is` table are from brief 032's
+> merge commit, split across `panel.css` and `panel.js`. Inline line
+> references in the prose below are unchanged and predate the split. If the
+> numbers don't match, grep for the symbol name; the names are stable, the
+> lines are not.
 
 ## Problem Statement
 
@@ -128,22 +129,22 @@ which is precisely what `:3649-3651` says was measured and rejected.
 
 | What | File | Symbol | Line |
 |---|---|---|---|
-| The point-distance test | `app/public/index.html` | `nearestCluster()` | 3657 |
-| The snap radius and why it is 8 | `app/public/index.html` | `SNAP_PX` | 3648-3652 |
-| Gutter magnet (schedules the hide) | `app/public/index.html` | `scrubMarkersEl` `mousemove` | 3699-3713 |
-| Click-snap, second caller | `app/public/index.html` | `targetFromEvent()` | 3674 |
-| Marker build + geometry | `app/public/index.html` | `buildMarker()` | 2510 |
-| Cluster width formula | `app/public/index.html` | `clusterWidthPx()` | 2506 |
-| Cluster objects (`pxX`, `lane`, `time`) | `app/public/index.html` | cluster build loop in `renderMarkers()` | 2480-2493 |
-| Count element | `app/public/index.html` | `.marker-count` | 594 |
-| Clusters grow rightward, on purpose | `app/public/index.html` | `.marker.cluster` | 585-593 |
-| Rotated single markers | `app/public/index.html` | `.marker.kill:not(.cluster)` | 572-578 |
-| Invisible hit target | `app/public/index.html` | `.marker::before` | 538 |
-| Per-marker enter/leave | `app/public/index.html` | `marker.addEventListener('mouseenter'…)` | 2541-2542 |
-| Hide timer | `app/public/index.html` | `scheduleHideHoverCard()` | 2694 |
-| Card open + positioning | `app/public/index.html` | `openHoverCard()` | 2661 |
-| Lane band arithmetic | `app/public/index.html` | `laneForGutterY()` | 3690 |
-| Re-render on track resize | `app/public/index.html` | `remeasureMarkers()` | 4052 |
+| The point-distance test | `app/public/panel.js` | `nearestCluster()` | 2085 |
+| The snap radius and why it is 8 | `app/public/panel.js` | `SNAP_PX` | 2076-2080 |
+| Gutter magnet (schedules the hide) | `app/public/panel.js` | `scrubMarkersEl` `mousemove` | 2127-2141 |
+| Click-snap, second caller | `app/public/panel.js` | `targetFromEvent()` | 2102 |
+| Marker build + geometry | `app/public/panel.js` | `buildMarker()` | 938 |
+| Cluster width formula | `app/public/panel.js` | `clusterWidthPx()` | 934 |
+| Cluster objects (`pxX`, `lane`, `time`) | `app/public/panel.js` | cluster build loop in `renderMarkers()` | 908-921 |
+| Count element | `app/public/panel.css` | `.marker-count` | 587 |
+| Clusters grow rightward, on purpose | `app/public/panel.css` | `.marker.cluster` | 581-586 |
+| Rotated single markers | `app/public/panel.css` | `.marker.kill:not(.cluster)` | 565-571 |
+| Invisible hit target | `app/public/panel.css` | `.marker::before` | 531-539 |
+| Per-marker enter/leave | `app/public/panel.js` | `marker.addEventListener('mouseenter'…)` | 969-970 |
+| Hide timer | `app/public/panel.js` | `scheduleHideHoverCard()` | 1122 |
+| Card open + positioning | `app/public/panel.js` | `openHoverCard()` | 1089 |
+| Lane band arithmetic | `app/public/panel.js` | `laneForGutterY()` | 2118 |
+| Re-render on track resize | `app/public/panel.js` | `remeasureMarkers()` | 2480 |
 
 ## Implementation Steps
 

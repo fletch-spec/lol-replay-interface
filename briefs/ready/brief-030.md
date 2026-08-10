@@ -14,10 +14,11 @@ model: sonnet
 
 Closes [#29](https://github.com/fletch-spec/lol-replay-interface/issues/29).
 
-> Line numbers in this brief are from commit `943760b` **plus the uncommitted
-> briefs 022-026 changes sitting in the working tree** - nothing from that
-> session is committed yet. If the numbers don't match, grep for the symbol
-> name; the names are stable, the lines are not.
+> Line numbers in this brief's `Where The Code Is` table are from brief 032's
+> merge commit, split across `index.html` (markup), `panel.css` and `panel.js`.
+> Inline line references in the prose below are unchanged and predate the
+> split. If the numbers don't match, grep for the symbol name; the names are
+> stable, the lines are not.
 
 ## Problem Statement
 
@@ -137,23 +138,23 @@ say what you measured.
 
 | What | File | Symbol | Line |
 |---|---|---|---|
-| Panel cap, and the comment arguing against it | `app/public/index.html` | `.panel` | 351-364 |
-| Timeline row (no wrap) | `app/public/index.html` | `.timeline-row` | 454 |
-| Track column (`min-width: 0`) | `app/public/index.html` | `.scrub-area` | 459-466 |
-| Rigid rail | `app/public/index.html` | `.rail` | 1102-1111 |
-| Rail scroll body | `app/public/index.html` | `.rail-body` | 1131 |
-| Legend (no wrap) | `app/public/index.html` | `.legend` | 1074-1080 |
-| Timeline row markup | `app/public/index.html` | `.timeline-row` markup | 1505-1546 |
-| Query container declaration | `app/public/index.html` | `.transport` `container-type` | 436 |
-| Existing container query + Firefox note | `app/public/index.html` | `@container (min-width: 1220px)` | 1274-1296 |
-| Card clips its own overflow | `app/public/index.html` | `.transport.card` | 438-442 |
-| Marker gutter | `app/public/index.html` | `.scrub-markers` | 520-526 |
-| Clusters grow rightward | `app/public/index.html` | `.marker.cluster` | 585-593 |
-| Marker geometry (where the clamp goes) | `app/public/index.html` | `buildMarker()` | 2510 |
-| Cluster width | `app/public/index.html` | `clusterWidthPx()` | 2506 |
-| Track-width measurement | `app/public/index.html` | `renderMarkers()` / `lastMarkerTrackWidth` | 2453 / 2461-2462 |
-| Re-render on track resize | `app/public/index.html` | `remeasureMarkers()` + `ResizeObserver` | 4052-4060 |
-| Spacing tokens | `app/public/index.html` | `--space-1`…`--space-4` | 34-37 |
+| Panel cap, and the comment arguing against it | `app/public/panel.css` | `.panel` | 344-357 |
+| Timeline row (no wrap) | `app/public/panel.css` | `.timeline-row` | 447 |
+| Track column (`min-width: 0`) | `app/public/panel.css` | `.scrub-area` | 452-459 |
+| Rigid rail | `app/public/panel.css` | `.rail` | 1095-1104 |
+| Rail scroll body | `app/public/panel.css` | `.rail-body` | 1124 |
+| Legend (no wrap) | `app/public/panel.css` | `.legend` | 1067-1073 |
+| Timeline row markup | `app/public/index.html` | `.timeline-row` markup | 81-122 |
+| Query container declaration | `app/public/panel.css` | `.transport` `container-type` | 429 |
+| Existing container query + Firefox note | `app/public/panel.css` | `@container (min-width: 1220px)` | 1267-1289 |
+| Card clips its own overflow | `app/public/panel.css` | `.transport.card` | 431-435 |
+| Marker gutter | `app/public/panel.css` | `.scrub-markers` | 513-519 |
+| Clusters grow rightward | `app/public/panel.css` | `.marker.cluster` | 581-586 |
+| Marker geometry (where the clamp goes) | `app/public/panel.js` | `buildMarker()` | 938 |
+| Cluster width | `app/public/panel.js` | `clusterWidthPx()` | 934 |
+| Track-width measurement | `app/public/panel.js` | `renderMarkers()` / `lastMarkerTrackWidth` | 881 / 889-890 |
+| Re-render on track resize | `app/public/panel.js` | `remeasureMarkers()` + `ResizeObserver` | 2480-2488 |
+| Spacing tokens | `app/public/panel.css` | `--space-1`…`--space-4` | 27-30 |
 
 ## Implementation Steps
 

@@ -20,8 +20,9 @@ Closes [#16](https://github.com/fletch-spec/lol-replay-interface/issues/16).
 > symptom before anything else - if it does not reproduce as described, say so
 > and stop.
 
-> Line numbers in this brief are from commit `e8e05b9`. If they don't match,
-> grep for the symbol name - the names are stable, the lines are not.
+> Line numbers in this brief are from brief 032's merge commit (`app/public/panel.js`,
+> post-split). If they don't match, grep for the symbol name - the names are
+> stable, the lines are not.
 
 ## Problem Statement
 
@@ -83,14 +84,14 @@ the game. Reproduced twice. `fps` is what the follow-cam uses.
 
 | What | File | Symbol | Line |
 |---|---|---|---|
-| Camera lock write | `app/public/index.html` | `lockCamera()` | 1608 |
-| Selection-only write | `app/public/index.html` | `selectTarget()` | 1654 |
-| Distance re-frame | `app/public/index.html` | `applyFraming()` | grep |
-| Render state cache | `app/public/index.html` | `applyRenderState()` / `renderState` | 2035 / 1955 |
-| Adoption heuristic | `app/public/index.html` | `render.cameraAttached && render.cameraMode === 'fps'` | 2045 |
-| HUD toggle list | `app/public/index.html` | `HUD_TOGGLES` | 1914 |
-| Cinematic hide list | `app/public/index.html` | `CINEMATIC_HIDE` | 1937 |
-| Render POST helper | `app/public/index.html` | `postRender()` | 1958 |
+| Camera lock write | `app/public/panel.js` | `lockCamera()` | 256 |
+| Selection-only write | `app/public/panel.js` | `selectTarget()` | 302 |
+| Distance re-frame | `app/public/panel.js` | `applyFraming()` | 399 |
+| Render state cache | `app/public/panel.js` | `applyRenderState()` / `renderState` | 683 / 603 |
+| Adoption heuristic | `app/public/panel.js` | `render.cameraAttached && render.cameraMode === 'fps'` | 693 |
+| HUD toggle list | `app/public/panel.js` | `HUD_TOGGLES` | 562 |
+| Cinematic hide list | `app/public/panel.js` | `CINEMATIC_HIDE` | 585 |
+| Render POST helper | `app/public/panel.js` | `postRender()` | 606 |
 | Render fetch (server) | `app/server.js` | `pollRoster()` → `/replay/render` | 238 |
 | Camera broadcast | `app/server.js` | `camera: { attached, selectionName, mode }` | 248-254 |
 | API proxy | `app/server.js` | `proxyToReplayApi()` | 151 |

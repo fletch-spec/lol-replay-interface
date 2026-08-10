@@ -15,10 +15,10 @@ model: sonnet
 Finishes [#13](https://github.com/fletch-spec/lol-replay-interface/issues/13) -
 the half brief 017 measured and reported rather than silently re-tuned.
 
-> Line numbers in this brief are from commit `943760b` **plus the uncommitted
-> briefs 022-026 changes sitting in the working tree** - nothing from that
-> session is committed yet. If the numbers don't match, grep for the symbol
-> name; the names are stable, the lines are not.
+> Line numbers in this brief's `Where The Code Is` table are from brief 032's
+> merge commit (`app/public/panel.js`, post-split). Inline line references in
+> the prose below are unchanged and predate the split. If the numbers don't
+> match, grep for the symbol name; the names are stable, the lines are not.
 
 ## Problem Statement
 
@@ -131,22 +131,22 @@ it has to be *proved*, not assumed - step 5 exists for that.
 
 | What | File | Symbol | Line |
 |---|---|---|---|
-| The fixed-grid bucket | `app/public/index.html` | `eventFingerprint()` | 2419 |
-| Why the tuple looks like that | `app/public/index.html` | comment above `eventFingerprint()` | 2407-2418 |
-| Merge path (only writer) | `app/public/index.html` | `mergeEvents()` | 2760 |
-| The map itself | `app/public/index.html` | `eventsByKey` | 2289 |
-| Reader: render list | `app/public/index.html` | `visibleEvents()` | 2433 |
-| Reader: cache write | `app/public/index.html` | `localStorage.setItem(eventsCacheKey(), …)` | 2937 |
-| Reset path | `app/public/index.html` | `clearEventsDisplay()` | 2752 |
-| Cache load (re-merges) | `app/public/index.html` | `loadCachedEvents()` | 2805 |
-| Cache version | `app/public/index.html` | `EVENTS_CACHE_VERSION` | 2792 |
-| Cache key | `app/public/index.html` | `eventsCacheKey()` | 2794 |
-| Filtered-out names | `app/public/index.html` | `IGNORED_EVENT_NAMES` | 2311 |
-| Downstream: sorted array | `app/public/index.html` | `sortedEvents` | 2449 |
-| Downstream: markers | `app/public/index.html` | `renderMarkers()` | 2453 |
-| Downstream: clustering | `app/public/index.html` | `CLUSTER_PX` | 2443 |
-| Downstream: steppers | `app/public/index.html` | `COMMANDS` event step | 3808-3814 |
-| Scan loop (time-based, not count-based) | `app/public/index.html` | `scanReplay()` | 2844 |
+| The fixed-grid bucket | `app/public/panel.js` | `eventFingerprint()` | 847 |
+| Why the tuple looks like that | `app/public/panel.js` | comment above `eventFingerprint()` | 835-846 |
+| Merge path (only writer) | `app/public/panel.js` | `mergeEvents()` | 1188 |
+| The map itself | `app/public/panel.js` | `eventsByKey` | 717 |
+| Reader: render list | `app/public/panel.js` | `visibleEvents()` | 861 |
+| Reader: cache write | `app/public/panel.js` | `localStorage.setItem(eventsCacheKey(), …)` | 1365 |
+| Reset path | `app/public/panel.js` | `clearEventsDisplay()` | 1180 |
+| Cache load (re-merges) | `app/public/panel.js` | `loadCachedEvents()` | 1233 |
+| Cache version | `app/public/panel.js` | `EVENTS_CACHE_VERSION` | 1220 |
+| Cache key | `app/public/panel.js` | `eventsCacheKey()` | 1222 |
+| Filtered-out names | `app/public/panel.js` | `IGNORED_EVENT_NAMES` | 739 |
+| Downstream: sorted array | `app/public/panel.js` | `sortedEvents` | 877 |
+| Downstream: markers | `app/public/panel.js` | `renderMarkers()` | 881 |
+| Downstream: clustering | `app/public/panel.js` | `CLUSTER_PX` | 871 |
+| Downstream: steppers | `app/public/panel.js` | `COMMANDS` event step | 2232-2243 |
+| Scan loop (time-based, not count-based) | `app/public/panel.js` | `scanReplay()` | 1272 |
 
 ## Implementation Steps
 

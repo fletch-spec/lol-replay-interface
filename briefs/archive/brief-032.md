@@ -1,6 +1,6 @@
 ---
 id: brief-032
-state: ready
+state: complete
 created: 2026-08-10
 updated: 2026-08-10
 agent: user
@@ -298,3 +298,55 @@ in Chromium. Steps 1-5 need no replay; 6-8 need one loaded.
   make it match. A difference means the move was not a move; find what changed.
 - **If `node --check` fails on `panel.js`**, the cut was wrong, not the code.
   Re-cut from the frozen baseline rather than patching the extracted file.
+
+## Outcome
+
+**The move was a move, and it is provable rather than sampled.** `panel.css` is
+byte-identical to the baseline's lines 8-1430 and `panel.js` to lines 1573-4098;
+the remaining markup is byte-identical to 1433-1571. `index.html` is 150 lines.
+The `<link>` landed on line 7 - the exact line `<style>` occupied, still the last
+element in `<head>` - so the cascade trap this brief flagged is closed by
+position, not by inspection. The `<script src>` is line 148 of 150, last before
+`</body>`, with no `defer`, `async` or `type="module"`. `node --check` passes.
+
+**The executing session replaced Verification steps 3 and 4 with a byte-diff
+against the frozen baseline instead of standing up a second live server, and
+that was the better call.** Byte-identical CSS plus a verified-identical `<link>`
+position plus "there is only one stylesheet" is a proof of unchanged cascade;
+comparing twelve computed style objects was a sample of one. The brief's wording
+("serve the frozen copy... alongside") implied the weaker test, and the session
+declared the departure rather than quietly satisfying the letter of it. Future
+equivalence briefs should ask for the byte-diff first and reserve live
+comparison for what a byte-diff cannot reach.
+
+**Step 4's real finding is that the escalation threshold was never in danger,
+for a reason the count alone does not show.** 53 top-level `let`s (the brief
+guessed ~48), 11 assigned from two or more domain groups against a ~15 threshold.
+The report honestly caveats that its `=`-matching heuristic undercounts
+collections mutated by `.set()`/`.push()` - `eventsByKey`, `cues`,
+`markerClusters`, `sortedEvents` - and that caveat reads like it might push the
+real number over. It does not, and brief 033 should not spend a session
+rechecking it: the obstacle this brief named is that **imported ES bindings are
+read-only, so only reassignment is a parse error**. Mutating the object an
+imported binding points at is entirely legal. Those four were checked -
+`eventsByKey` is never reassigned at all, and `cues`, `markerClusters` and
+`sortedEvents` are reassigned only inside their own declaring domain - so all
+four can be exported and mutated across modules without forcing any state
+decision. The number that governs brief 033 is 11.
+
+**Step 5 re-pointed 76 code-table rows across six briefs and got 75 right.** The
+miss was brief 030's `Spacing tokens` row, which kept both the old file and the
+old line numbers (`index.html:34-37`, now the `setupToggle` button) when the
+tokens had moved to `panel.css:27-30`. Corrected at review. Every other row was
+verified mechanically and the three that a naive symbol-match flagged were
+false positives, all correct on inspection. One missed row out of 76 is the
+honest cost of a mechanical re-pointing pass, and it is cheaper than the hour
+brief 022's Outcome records; it is worth knowing that the pass needs a checker,
+not a careful reader.
+
+**Not found: any behaviour change.** Nothing in `Out Of Scope` moved -
+`server.js`, `docs/`, `README.md` untouched, `COMMANDS`' arrow wrappers intact,
+and `.control-split-caret.open`'s dead `border-color` still there for brief 028
+to delete. `cameraState` (`panel.js:224`, written at :2418, never read) was
+found in passing and left alone - same category as 028's dead rule, and it
+belongs to whoever next opens that domain.
