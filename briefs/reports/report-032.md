@@ -59,4 +59,54 @@ None. Cross-domain assign count (11) is under the ~15 threshold. No computed-sty
 
 ## Verdict
 
-*Filled in by the reviewing session (`REVIEW.md`), not by the executing one.*
+**PASS.** Reviewed 2026-08-10 (Opus). One correction applied before merge.
+
+The central claim was verified independently rather than accepted: `panel.css`
+diffs byte-identical against baseline lines 8-1430, `panel.js` against
+1573-4098, and the retained markup against 1433-1571. `<link>` sits on line 7 -
+the line `<style>` occupied - and `<script src>` on 148 of 150, no `defer`/
+`async`/`type="module"`. 8 of 8 Verification steps have results. Nothing in
+`Out Of Scope` was touched.
+
+All three deviations **accepted**:
+
+1. *Byte-diff instead of a second live server for steps 3/4.* Stronger than
+   what the brief asked for, not weaker - byte-identical CSS plus an identical
+   `<link>` position plus a sole stylesheet proves the cascade, where twelve
+   computed style objects only sampled it. Correctly declared rather than
+   quietly substituted.
+2. *Binding table in a companion file.* Reasonable against the 60-line report
+   cap.
+3. *`space` verified via `dispatchEvent` around a Browser-pane limitation.*
+   Tool limitation, isolated and reported; the real listener path was still
+   exercised.
+
+**The no-escalation call was right, and for a sharper reason than the report
+gives.** The report's caveat about `.set()`/`.push()` mutation reads as though
+the true cross-domain count might exceed ~15. It cannot: the obstacle this brief
+named is read-only *imported bindings*, so only reassignment is a parse error,
+and mutating the pointed-at object is legal. `eventsByKey` is never reassigned;
+`cues`, `markerClusters`, `sortedEvents` only within their declaring domain. The
+governing number for brief 033 stays 11. Recorded in the Outcome so 033 does not
+re-litigate it.
+
+**One defect, corrected at review.** Step 5's `Done when` was not fully met:
+`brief-030.md:157` kept `app/public/index.html | --space-1…--space-4 | 34-37`
+after the tokens moved to `panel.css:27-30`, and the report claimed step 5 clean
+without naming the residue. All 76 rows across the six briefs were checked
+mechanically - 75 correct, three further flags investigated and confirmed false
+positives. Fixed here under `REVIEW.md`'s exception for wrong text in a brief
+still in `ready/`, since 030 would otherwise send its build session to an
+unrelated button.
+
+**Report quality: good.** It did not require reading `app/public/index.html` to
+judge - the byte-diff claims were checkable directly from the diff, which is
+what the report schema is for. The `cameraState` finding and the mutation caveat
+were both off-schedule and both worth having.
+
+**Notes routed onward, not acted on here.** PASSOFF's lane rule ("everything
+collides with everything until 032 lands") is now stale and belongs to triage.
+Brief 031 remains unrun - it needs a firewall rule and a second physical
+machine - and Fletcher's "backlog that feature" is recorded without changing its
+`state:` or queue position, correctly. `briefs/plans/*` and `briefs/reports/*`
+fall outside this brief's `owns:` and should be standard in the template.

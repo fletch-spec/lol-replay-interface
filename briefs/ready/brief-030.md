@@ -154,7 +154,7 @@ say what you measured.
 | Cluster width | `app/public/panel.js` | `clusterWidthPx()` | 934 |
 | Track-width measurement | `app/public/panel.js` | `renderMarkers()` / `lastMarkerTrackWidth` | 881 / 889-890 |
 | Re-render on track resize | `app/public/panel.js` | `remeasureMarkers()` + `ResizeObserver` | 2480-2488 |
-| Spacing tokens | `app/public/index.html` | `--space-1`…`--space-4` | 34-37 |
+| Spacing tokens | `app/public/panel.css` | `--space-1`…`--space-4` | 27-30 |
 
 ## Implementation Steps
 
