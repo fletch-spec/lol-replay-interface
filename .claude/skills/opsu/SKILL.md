@@ -1,6 +1,6 @@
 ---
 name: opsu
-description: Start an Opus session on the LoL Replay Controller - review a finished brief, author a new one from a commission, or run a triage pass. Works out which of the three is due from the repo's own state when given no argument. Use when the user types /opsu, or asks to review a brief, write a brief, fill the queue, or decide what to work on next. Accepts "review NNN", "author NNN", or "triage".
+description: Start an Opus session on the LoL Replay Controller - review a finished brief, author a new one from a commission, or run a triage pass. Works out which of the three is due from the repo's own state when given no argument. Use when the user types /opsu, or asks to review a brief, write a brief, fill the queue, or decide what to work on next. Also accepts "monitor" to wait out a build session in flight and then route. Accepts "review NNN", "author NNN", "triage", or "monitor".
 ---
 
 # Start an Opus session
@@ -13,6 +13,10 @@ at the same time. Each has its own procedure, and this file only routes:
 | `review` | [`briefs/REVIEW.md`](../../../briefs/REVIEW.md) | a report + a branch → a verdict, an Outcome, a merge |
 | `author` | [`briefs/AUTHOR.md`](../../../briefs/AUTHOR.md) | one commission → one brief in `ready/` |
 | `triage` | [`briefs/TRIAGE.md`](../../../briefs/TRIAGE.md) | open issues → commissions + a queue with lanes |
+
+`monitor` is a fourth argument but not a fourth role: it waits out a build
+session that is still running, then falls into the routing below (which lands on
+`review`, every time, by construction). See §2.
 
 ## 1. Declare the tier, before anything else
 
@@ -31,7 +35,8 @@ was built to stop.
 ## 2. Work out which mode is due
 
 If the user named one (`/opsu review 031`, `/opsu author 033`, `/opsu triage`),
-use it. Otherwise read the state:
+use it. `/opsu monitor` means a build session is in flight right now - go to
+"Monitor" below, wait for it, and then come back here. Otherwise read the state:
 
 ```bash
 git fetch --prune && git branch -r --list 'origin/brief/*' && ls briefs/reports/ && grep -l '^state: ready' briefs/ready/*.md | wc -l && grep -A3 '^Queue:' briefs/PASSOFF.md
@@ -47,6 +52,40 @@ Decide in this order, and take the first that matches:
 3. **Fewer than ~3 briefs in `briefs/ready/`** → `triage`.
 4. **None of the above** → report the state in three lines and ask. Do not invent
    work; an idle Opus session costs nothing and is often the correct answer.
+
+### Monitor - waiting out a build session
+
+`/opsu monitor` is for when a `/stonne` session is still building and you want
+the review to start the moment it lands, without a human relaying "it's done".
+Arm one background poll and then work on something else:
+
+```bash
+for i in $(seq 1 240); do
+  if [ -n "$(git ls-remote --heads origin brief/NNN 2>/dev/null)" ]; then
+    echo "DONE: origin/brief/NNN pushed"; exit 0
+  fi
+  sleep 30
+done
+echo "TIMEOUT: 2h elapsed, brief/NNN still not pushed"; exit 1
+```
+
+Run it with Bash `run_in_background` - one notification when it exits, not a
+`Monitor` stream. Three things this shape gets right, each learned the hard way
+on 027:
+
+- **The finish signal is the pushed branch, and only that.** PASSOFF stage 4
+  writes `report-NNN.md`, *then* commits, *then* pushes. Polling for the report
+  file fires while the report is still being written and the branch does not yet
+  exist to diff against - a review that starts there has half its input.
+- **`ls-remote`, never `git fetch`.** The build session is usually working in
+  this same checkout; a fetch on a 30s timer races its commits for `index.lock`.
+  `ls-remote` reads the remote and touches nothing locally.
+- **Cap it.** A build session can stop and escalate instead of pushing, and that
+  is a correct outcome, not a hang. The loop exits nonzero after 2h so the
+  silence gets reported rather than waited on forever.
+
+When it fires, fall through to §2's ordering. It will land on `review` - that is
+the point of the mode, not a coincidence.
 
 ## 3. Run the mode
 
