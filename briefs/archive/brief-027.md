@@ -1,8 +1,8 @@
 ---
 id: brief-027
-state: ready
+state: complete
 created: 2026-08-08
-updated: 2026-08-08
+updated: 2026-08-10
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: []
@@ -284,3 +284,60 @@ objectives appear at all (#7) - unrelated mechanism, still open.
   `EVENTS_CACHE_VERSION` to make the symptom go away - that trades a five-line
   fix for a multi-minute re-scan on every replay Fletcher has already scanned.
   Say what the load path actually did instead.
+
+## Outcome
+
+**The count stopped growing, which is the check brief 026 could not make.** Two
+forced full scans of the same replay in one session (~925s of game time each at
+32x) both landed on 28 raw / 25 visible - identical, not merely close. Brief
+026's 101 → 106 → 109 is closed, and #13 with it. The anchor index is 22 lines
+(`eventAnchorKey()`, `panel.js:728`) and the merge change is four.
+
+**The mechanism was right and the implementation kept the part that makes it
+right.** `eventAnchorKey()` returns the matched anchor without pushing or
+rewriting it, so the anchor genuinely never moves and the t / t+1.9 / t+3.7
+chain cannot walk. `eventsByKey.clear()` occurs exactly once in the whole file
+and `eventAnchors.clear()` is on the next line, so the stale-anchor-eats-a-real-
+event failure has one site and it is covered.
+
+**The named acceptance pairs did not transfer between replays, and that is a
+lesson for the next brief that borrows one.** `Done Looks Like` asked for brief
+017's specific pairs (0.91s, 0.25s, 0.18s) to merge. Those numbers came from one
+cached array captured on one replay; this session measured a different replay and
+found four pairs at 0.616 / 0.364 / 0.386 / 0.539s. All four merged and none
+survived under 2s, which is the real acceptance test. A pair measured on a
+specific cached array is evidence that the bug exists, not a fixture that a later
+session can re-observe - write the acceptance test as a property ("no
+same-identity pair under tolerance survives"), not as a list of gaps.
+
+**The cache self-heal was proved rather than assumed, so the departure from
+brief 026's version-bump precedent stands.** `loadCachedEvents()` re-merges the
+old `v2` array through the new path and the duplicates collapse on load, with no
+bump and therefore no forced ~51-second re-scan of anything already scanned. The
+brief was right to make step 5 prove this instead of reasoning it.
+
+**The finding worth carrying forward is one this brief did not cause and may
+have made easier to hit.** V6 is a PARTIAL: `‹ Event` / `Event ›` skips a row
+when two events share an *identical* `EventTime` - confirmed live, stepping from
+t=191.494 jumps to 206.006 and never visits the second half of a mutual kill.
+Four such pairs exist on this replay. The defect is in `stepEvent()`'s `time +
+0.5` buffer, which this diff does not touch at all, and the pairs have different
+identities (different killer and victim), so the old fixed-grid fingerprint never
+merged them either - it is pre-existing on both counts.
+
+But the *exposure* is plausibly new, and the next session should not be surprised
+by that. The old code's unconditional `eventsByKey.set()` rewrote the stored
+event on every later jittered copy, so two genuinely simultaneous events each
+ended up carrying an independently-jittered time and would rarely tie to the
+exact float. First-copy-wins now preserves both original emission times, which
+for a truly simultaneous pair *are* the same number - exactly the input the
+`+0.5` buffer mishandles. This is a hypothesis from reading the two code paths,
+**not measured**: nobody counted identical-`EventTime` pairs before the change.
+Testing it needs a before/after count of exact time ties on the same replay,
+which is cheap to get and worth getting inside whatever brief fixes the stepper.
+It does not argue against first-copy-wins - killing marker drift between poll
+ticks is worth more than a stepper bug that predates it.
+
+**`eventFingerprint()` is gone rather than orphaned.** Implementation step 2 said
+to leave it "for now" as a staging device; by step 4 it had zero call sites and
+deleting it was the step's own end state.

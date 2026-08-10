@@ -59,4 +59,52 @@ bump (step 5).
 
 ## Verdict
 
-*Filled in by the reviewing session (`REVIEW.md`), not by the executing one.*
+**PASS.** Reviewed 2026-08-10 (Opus). No corrections needed before merge.
+
+9 of 9 Verification steps have results. Nothing in `Out Of Scope` was touched -
+one file, five symbols, with `EVENTS_CACHE_VERSION`, `CLUSTER_PX`,
+`describeEvent()` and the harvest all untouched.
+
+**All four `Can't Skip` items verified against the shipped file, not the
+report's word for them:**
+
+1. *Step 1 before any edit* - four pairs measured at 0.616 / 0.364 / 0.386 /
+   0.539s. Different replay than brief 017's, so different numbers; the Escalate
+   clause fires only on *no* pairs, so this was correctly not an escalation.
+2. *The anchor must not move* - `eventAnchorKey()` returns `${identity}|${anchor}`
+   on a hit and neither pushes nor rewrites. Confirmed in code, not inferred.
+3. *`KillStreak` stays in the identity* - present and last in the tuple, with the
+   `|| ''` coercion kept on every optional field as the Traps section required.
+4. *Clear the anchors wherever `eventsByKey` is cleared* - `eventsByKey.clear()`
+   occurs exactly once in the file (`:1203`) with `eventAnchors.clear()` on the
+   next line, and `eventsByKey` is never reassigned after init. "Wherever" is
+   satisfied because there is only one where.
+
+**Both deviations accepted.** Deleting `eventFingerprint()` is the end state of a
+step that said "leave it for now"; it had zero call sites by step 4. Resetting
+`harvestDone` via console to force a second scan works around an affordance brief
+009 removed on purpose and runs the same `scanReplay()` path.
+
+**The PARTIAL on V6 passes and the "pre-existing" claim holds structurally.**
+`stepEvent()` appears zero times in the diff, and the affected pairs have
+different identities, so the old fingerprint never merged them either.
+
+One thing the report framed slightly too cleanly, now recorded in the Outcome:
+the bug is pre-existing but its *exposure* may be new. Last-copy-wins previously
+overwrote stored `EventTime`s with independently-jittered values that would
+rarely tie exactly; first-copy-wins preserves both original times, which for a
+truly simultaneous pair are identical - the exact input `stepEvent()`'s `+0.5`
+buffer mishandles. Stated as an untested hypothesis, with the before/after tie
+count named as what would settle it. It does not argue against first-copy-wins.
+
+**Report quality: good.** Judging this never required opening the codebase for
+intent - only two claims needed checking against the file, and both were
+`Can't Skip` items that no diff can show (a symbol's continued presence, and the
+absence of a second clear site). That is the schema working.
+
+One nit for the next report: `Deviations` and `Escalations` cite "step 5/6/7"
+meaning *Implementation* steps while the table numbers *Verification* steps, and
+both sets exist and disagree. Say which.
+
+**Not fixed here, by rule:** the stepper skip is adjacent work and becomes a
+commission for `AUTHOR.md`, not a commit in a review.
