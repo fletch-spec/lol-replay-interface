@@ -22,8 +22,11 @@ card stays on the backlog until this is done - Fletcher's call, 2026-08-08.
 > already-pushed briefs; `TRIAGE.md`'s rule is that renumbering costs more than
 > the exception, and this is the exception.
 
-> Line numbers are from commit `9b065b1`. If they don't match, grep for the
-> symbol name - the names are stable, the lines are not.
+> Line numbers in this brief's `Where The Code Is` table are from brief 032's
+> merge commit, split across `index.html` (markup) and `panel.js`. Inline
+> line references in the prose above are unchanged and predate the split. If
+> the numbers don't match, grep for the symbol name - the names are stable,
+> the lines are not.
 
 ## Problem Statement
 
@@ -126,14 +129,14 @@ an experiment. A fix chosen now would be a guess about that.
 | Static file serving | `app/server.js` | `express.static` | 190 |
 | Portrait cache + serving | `app/server.js` | `servePortrait()` | 122 |
 | WebSocket push | `app/server.js` | `WebSocketServer` / `broadcast()` | 193 / 195 |
-| Client socket URL (origin-relative) | `app/public/index.html` | `new WebSocket(...)` | 3975 |
-| Clipboard-first export | `app/public/index.html` | `exportCues()` | 3451 |
-| Textarea fallback | `app/public/index.html` | `exportAreaEl` | 3022 |
-| Export notes popup | `app/public/index.html` | `window.open()` | 3517 |
-| Cue storage key | `app/public/index.html` | `cuesStorageKey()` | 2798 |
-| Event cache key | `app/public/index.html` | `eventsCacheKey()` | 2794 |
-| Other localStorage keys | `app/public/index.html` | `followDistance` / `hideNames` / `cinematicRestore` / `lastFollow` | 1808 / 2057 / 2212 / 2269 |
-| Focus chip (the thing this may retire) | `app/public/index.html` | `#focusChip` | 1442 |
+| Client socket URL (origin-relative) | `app/public/panel.js` | `new WebSocket(...)` | 2403 |
+| Clipboard-first export | `app/public/panel.js` | `exportCues()` | 1879 |
+| Textarea fallback | `app/public/panel.js` | `exportAreaEl` | 1446 |
+| Export notes popup | `app/public/panel.js` | `window.open()` | 1945 |
+| Cue storage key | `app/public/panel.js` | `cuesStorageKey()` | 1226 |
+| Event cache key | `app/public/panel.js` | `eventsCacheKey()` | 1222 |
+| Other localStorage keys | `app/public/panel.js` | `followDistance` / `hideNames` / `cinematicRestore` / `lastFollow` | 236 / 485 / 640 / 697 |
+| Focus chip (the thing this may retire) | `app/public/index.html` | `#focusChip` | 18 |
 
 ## Implementation Steps
 

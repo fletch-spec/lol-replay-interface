@@ -14,10 +14,11 @@ model: sonnet
 
 Closes [#30](https://github.com/fletch-spec/lol-replay-interface/issues/30).
 
-> Line numbers in this brief are from commit `943760b` **plus the uncommitted
-> briefs 022-026 changes sitting in the working tree** - nothing from that
-> session is committed yet. If the numbers don't match, grep for the symbol
-> name; the names are stable, the lines are not.
+> Line numbers in this brief's `Where The Code Is` table are from brief 032's
+> merge commit, split across `index.html` (markup), `panel.css` and `panel.js`.
+> Inline line references in the prose below are unchanged and predate the
+> split. If the numbers don't match, grep for the symbol name; the names are
+> stable, the lines are not.
 
 ## Problem Statement
 
@@ -109,17 +110,17 @@ the caret ever disagrees with the panel, the bug is in this brief, not there.
 
 | What | File | Symbol | Line |
 |---|---|---|---|
-| Caret markup (the `⌄`) | `app/public/index.html` | `#setupToggle` | 1458 |
-| Split control wrapper | `app/public/index.html` | `.control-split` | 111 |
-| Split hairline | `app/public/index.html` | `.control-split-sep` | 118 |
-| Caret style | `app/public/index.html` | `.control-split-caret` | 123 |
-| Caret open state (dead `border-color`) | `app/public/index.html` | `.control-split-caret.open` | 129 |
-| Toggle handler | `app/public/index.html` | `setupToggleEl` click | 2249-2253 |
-| Element lookup | `app/public/index.html` | `setupToggleEl` | 1601 |
-| The panel it discloses | `app/public/index.html` | `.scene-setup` / `#setupPanel` | 133 / 1465 |
-| Base button rule (and why `line-height: 1`) | `app/public/index.html` | `button` | 1345-1359 |
-| Sibling class brief 022 kept separate | `app/public/index.html` | `.setup-toggle` | 98 |
-| Reduced-motion guard | `app/public/index.html` | `@media (prefers-reduced-motion: no-preference)` | 1199 |
+| Caret markup (the `⌄`) | `app/public/index.html` | `#setupToggle` | 34 |
+| Split control wrapper | `app/public/panel.css` | `.control-split` | 104 |
+| Split hairline | `app/public/panel.css` | `.control-split-sep` | 111 |
+| Caret style | `app/public/panel.css` | `.control-split-caret` | 116 |
+| Caret open state (dead `border-color`) | `app/public/panel.css` | `.control-split-caret.open` | 122 |
+| Toggle handler | `app/public/panel.js` | `setupToggleEl` click | 677-681 |
+| Element lookup | `app/public/panel.js` | `setupToggleEl` | 29 |
+| The panel it discloses | `app/public/panel.css` / `app/public/index.html` | `.scene-setup` / `#setupPanel` | 126 / 41 |
+| Base button rule (and why `line-height: 1`) | `app/public/panel.css` | `button` (comment + rule) | 1338-1356 |
+| Sibling class brief 022 kept separate | `app/public/panel.css` | `.setup-toggle` | 91 |
+| Reduced-motion guard | `app/public/panel.css` | `@media (prefers-reduced-motion: no-preference)` | 1192 |
 
 ## Implementation Steps
 

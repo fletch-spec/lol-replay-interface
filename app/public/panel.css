@@ -1,0 +1,1423 @@
+  :root {
+    color-scheme: dark;
+    --bg: #0b0d10;
+    --panel: #14171c;
+    --border: #262b33;
+    --text: #e6e9ef;
+    --dim: #8891a0;
+    --ok: #37d67a;
+    --warn: #e0b23c;
+    --bad: #e05c5c;
+    --accent: #4d8dff;
+    /* Team colours. Blue/red on this panel always mean ORDER/CHAOS - never a
+       category - which is why structures moved off the accent blue below. */
+    --blue: #4d8dff;
+    --red: #e0576b;
+    /* Event categories. */
+    --kill: #e05c5c;
+    --obj: #e0b23c;
+    --struct: #7f8ea3;
+    /* Cue points and the A/B loop (brief 005). Deliberately outside the event
+       palette and outside blue/red, so a cue can never be misread as an event
+       marker or a team. */
+    --cue: #2fd4c6;
+    --loop: #a97bff;
+    /* One spacing scale (brief 015), applied instead of per-element nudges -
+       the complaint was inconsistency, not any one wrong number. */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 24px;
+  }
+
+  /* Roster - a card like every other top-level block (brief 015), so the
+     panel reads as a consistent stack rather than one loose section among
+     bordered ones. */
+  .roster {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+    transition: opacity 0.15s ease;
+  }
+  .roster.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  /* Scene controls (brief 006). These live in the status bar: Cinematic is
+     pressed during a take and Setup is the door to everything that isn't. */
+  .scene-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    transition: opacity 0.15s ease;
+  }
+  .scene-controls.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .cinematic-btn {
+    flex: 0 0 auto;
+    font-size: 11px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 0;
+    min-width: 96px;
+  }
+  .cinematic-btn.active {
+    background: var(--warn);
+    color: #1a1206;
+  }
+  /* The HUD toggles are configuration, not live control - you set your HUD once
+     and then leave it alone. Cinematic is the button you actually press during
+     a take, so it stays out here and the 17 chips live behind Setup. */
+  .setup-toggle {
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 7px;
+  }
+  .setup-toggle.open {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  /* Brief 022: Cinematic and Setup are one control, not two peer buttons - the
+     right half is the door to the HUD chips the left half drives. Own class so
+     restyling it doesn't touch Reset or Hide names, which still use
+     .setup-toggle (see brief 022's traps). */
+  .control-split {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow: hidden;
+  }
+  .control-split-sep {
+    width: 1px;
+    align-self: stretch;
+    background: var(--border);
+  }
+  .control-split-caret {
+    font-size: 11px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 0;
+  }
+  .control-split-caret.open {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .scene-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .scene-setup[hidden] { display: none; }
+  .setup-group {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+  .toggle-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex: 1;
+  }
+  .toggle-chip {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #0b0d10;
+    color: var(--dim);
+    cursor: pointer;
+  }
+  .toggle-chip.on {
+    color: var(--text);
+    border-color: #3d4756;
+    background: #171c23;
+  }
+  .toggle-chip.off {
+    color: #5d6675;
+    text-decoration: line-through;
+  }
+  .control-sep {
+    width: 1px;
+    align-self: stretch;
+    background: var(--border);
+    margin: 0 2px;
+  }
+
+  /* Camera distance lives in the status bar next to Cinematic - it is adjusted
+     while watching, so it belongs with the other live controls. */
+  .camera-bar-label {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  /* Brief 022: Reset moves under the label it resets, instead of floating as a
+     third peer alongside Hide names and Setup. Sized so the two-row column
+     doesn't grow the row past the height a single button already set. */
+  .camera-bar-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+  }
+  .camera-bar-group .camera-bar-label {
+    line-height: 1;
+  }
+  .camera-bar-group .setup-toggle {
+    padding: 1px 7px;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  .scene-controls input[type='range'] {
+    flex: 0 0 130px;
+    accent-color: var(--ok);
+    cursor: pointer;
+    vertical-align: middle;
+  }
+  .camera-bar-value {
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 11px;
+    color: var(--text);
+    min-width: 38px;
+  }
+  /* Two-row fallback (brief 015): the single-row-of-ten primary approach was
+     built and measured first - at 1400px a card had ~115px total, leaving
+     ~37px for all of champion + summoner + KDA text after the portrait, gap
+     and padding. That's not "cleanly ellipsised," it's unreadable, so this
+     is the documented fallback: smaller portrait, tighter padding, the hint
+     moved to a `title` attribute instead of its own line. Still two rows,
+     like before this brief, just denser than they were. */
+  .roster-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .roster-block-label {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--dim);
+    padding-left: 2px;
+  }
+  .roster-list {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-2);
+  }
+  /* Portrait beside the text, not above it. Stacked, the card was mostly empty
+     space to the left and right of the image. */
+  .roster-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 1 1 0;
+    max-width: 240px;
+    min-width: 0;
+    background: #0f1216;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: var(--space-1) var(--space-2);
+    cursor: pointer;
+    text-align: left;
+  }
+  /* Two controls in one card: the portrait locks the camera, the text selects
+     the target frame. They were one click before, which conflated the in-game
+     single-click (frame) and double-click (camera) behaviours. */
+  .roster-item.cam-locked {
+    border-color: var(--ok);
+    background: rgba(55, 214, 122, 0.12);
+  }
+  .roster-item.frame-selected {
+    border-color: var(--accent);
+    background: rgba(77, 141, 255, 0.1);
+  }
+  /* 32px, down from 44px - part of the two-row fallback's "smaller portrait". */
+  .roster-portrait-wrap {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .roster-portrait-wrap:hover {
+    outline: 2px solid var(--ok);
+    outline-offset: 2px;
+  }
+  .roster-cam-hint {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: rgba(6, 12, 18, 0.62);
+    color: var(--ok);
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    pointer-events: none;
+  }
+  .roster-portrait-wrap:hover .roster-cam-hint { opacity: 1; }
+  .roster-item.cam-locked .roster-portrait-wrap {
+    outline: 2px solid var(--ok);
+    outline-offset: 2px;
+  }
+  .roster-info {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+    min-width: 0;
+    flex: 1;
+  }
+  .roster-info:hover {
+    background: rgba(77, 141, 255, 0.14);
+  }
+  .roster-portrait {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    object-fit: cover;
+    background: var(--panel);
+  }
+  .roster-portrait-fallback {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    background: var(--panel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dim);
+  }
+  .roster-champ {
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .roster-name {
+    font-size: 10px;
+    color: var(--dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .roster-stats {
+    font-size: 10px;
+    color: var(--dim);
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    white-space: nowrap;
+  }
+
+  .panel {
+    width: 100%;
+    /* Monitor 2 is a whole screen; a 720px column left most of it as dead
+       space. Wider also means more pixels per minute on the scrub track, which
+       is what separates markers in a kill-heavy game. */
+    max-width: 1400px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  /* Every functional group gets its own inset card, so the panel reads as
+     status / timeline / controls / roster rather than one long column. */
+  .card {
+    background: #0f1216;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  /* Brief 022: status is chrome, not content - no border or fill like the
+     content cards below it, but it keeps .card's padding so nothing shifts. */
+  .statusbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: var(--dim);
+    padding: var(--space-3) var(--space-4);
+  }
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bad);
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+  .dot.connected { background: var(--ok); }
+  .dot.no-replay { background: var(--warn); }
+  .dot.helper-down { background: var(--bad); }
+
+  .status-text {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .chips {
+    display: flex;
+    gap: 8px;
+  }
+  .chip {
+    font-size: 12px;
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    letter-spacing: 0.04em;
+    color: var(--dim);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+  .chip.playing {
+    color: #9fe8bd;
+    border-color: rgba(55, 214, 122, 0.35);
+  }
+  .chip.is-paused {
+    color: var(--warn);
+    border-color: rgba(224, 178, 60, 0.35);
+  }
+
+  /* Transport */
+  /* One card with hairline-separated sections rather than three stacked cards.
+     The controls, the bar they drive and the cue row are one instrument; three
+     separate borders made them read as three unrelated panels. */
+  .transport {
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    transition: opacity 0.15s ease;
+    container-type: inline-size;
+  }
+  .transport.card {
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .transport > * {
+    padding: var(--space-3) var(--space-4);
+  }
+  .transport > * + * {
+    border-top: 1px solid var(--border);
+  }
+  .transport.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .timeline-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .scrub-area {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    /* Space above the track for the event marker gutter. Cue pins (brief 005)
+       get the strip *below* the track, so the two never share a lane. */
+    padding-top: 40px;
+  }
+  .scrub-track {
+    position: relative;
+    height: 42px;
+    background: #0f1216;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    user-select: none;
+    touch-action: none;
+  }
+  .scrub-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    background: var(--accent);
+    opacity: 0.3;
+    border-radius: 10px 0 0 10px;
+    pointer-events: none;
+  }
+
+  /* Minute ticks - without these, "18:42" has nothing to be 18:42 *of*. */
+  .scrub-ticks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 10px;
+  }
+  .tick {
+    position: absolute;
+    bottom: 0;
+    width: 1px;
+    height: 7px;
+    background: rgba(230, 233, 239, 0.13);
+  }
+  .tick.major {
+    height: 13px;
+    background: rgba(230, 233, 239, 0.28);
+  }
+  .tick-label {
+    position: absolute;
+    bottom: 14px;
+    transform: translateX(-50%);
+    font-size: 9px;
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    color: rgba(230, 233, 239, 0.38);
+    white-space: nowrap;
+  }
+
+  /* Event markers (brief 004) - three lanes so events that collide in time
+     stop colliding in pixels. Clustering runs per lane. */
+  .scrub-markers {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -34px;
+    height: 34px;
+  }
+  .marker {
+    position: absolute;
+    width: 4px;
+    height: 9px;
+    border-radius: 2px;
+    transform: translateX(-50%);
+    cursor: pointer;
+    opacity: 0.58;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+  /* Invisible 16px hit target - the drawn marker stays thin. */
+  .marker::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -4px;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 17px;
+  }
+  .marker.lane0 { top: 2px; }
+  .marker.lane1 { top: 14px; }
+  .marker.lane2 { top: 25px; }
+  /* Team owns colour now, category owns lane and shape (issue #14) - category
+     was carried twice (lane + hue) while team had only a 3px cap four points
+     of red away from --kill. team-none covers aces (handled separately below)
+     and any event whose killer doesn't resolve to a player - a neutral
+     objective, or a structure killed by a minion rather than a champion. */
+  .marker.team-order { background: var(--blue); }
+  .marker.team-chaos { background: var(--red); }
+  .marker.team-none { background: var(--dim); }
+  .marker.ace {
+    background: #fff;
+    top: 0;
+    height: 12px;
+    width: 5px;
+  }
+  /* Single-event shapes only - a cluster is a number, not a shape (brief 014).
+     Kills ship the documented diamond fallback rather than an X: this
+     session's Browser pane doesn't composite frames (briefs 014, 018), so an
+     ~8px glyph's legibility can't be verified by eye, and shipping one
+     unverified fails the brief's own "a smudge that is technically an X does
+     not [pass]" bar more certainly than the always-legible fallback does.
+     Neutral objectives get the same diamond by original decision - lane and
+     colour still tell kill and neutral apart, shape was the bonus channel. */
+  .marker.kill:not(.cluster),
+  .marker.objective:not(.cluster) {
+    width: 7px;
+    height: 7px;
+    border-radius: 1px;
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .marker.kill:not(.cluster).hot,
+  .marker.kill:not(.cluster):hover,
+  .marker.objective:not(.cluster).hot,
+  .marker.objective:not(.cluster):hover {
+    transform: translateX(-50%) rotate(45deg) scaleY(1.35);
+  }
+  /* Clustered markers grow from their left edge, not centred - the left edge
+     is the first event's real time (brief 014), and a centred wide cluster
+     would visually claim territory before that time even happened. */
+  .marker.cluster {
+    transform: translateX(0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .marker-count {
+    font-size: 8px;
+    font-weight: 700;
+    line-height: 1;
+    color: rgba(6, 18, 31, 0.75);
+    pointer-events: none;
+    user-select: none;
+  }
+  .marker.past { opacity: 1; }
+  .marker.hot,
+  .marker:hover {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1.35);
+  }
+  .marker.cluster.hot,
+  .marker.cluster:hover {
+    transform: translateX(0) scaleY(1.35);
+  }
+  .marker.active {
+    opacity: 1;
+    outline: 2px solid rgba(255, 255, 255, 0.9);
+    outline-offset: 1px;
+  }
+  /* Hover card - replaces native title tooltips. For a cluster it lists every
+     event, each seeking to its own timestamp: before this, only the first
+     event in a cluster was reachable at all. */
+  /* position: fixed so .transport.card's overflow: hidden (load-bearing for
+     its rounded corners) can't clip it - the containing-block exemption was
+     checked live (no ancestor sets transform/filter/perspective/will-change/
+     contain) before relying on it. top/bottom/left are computed per-open in
+     openHoverCard(), not fixed values - see the comment there for why. */
+  .hover-card {
+    position: fixed;
+    left: 0;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: none;
+    min-width: 210px;
+    max-width: 360px;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #12161c;
+    border: 1px solid #2f3742;
+    border-radius: 10px;
+    padding: 5px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6);
+  }
+  .hover-card.visible { display: block; }
+  .hc-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 7px;
+    border-radius: 7px;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+  }
+  .hc-row:hover { background: rgba(255, 255, 255, 0.06); }
+  .hc-row.order { border-left-color: var(--blue); }
+  .hc-row.chaos { border-left-color: var(--red); }
+  .hc-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .hc-dot.kill { background: var(--kill); }
+  .hc-dot.objective { background: var(--obj); }
+  .hc-dot.tower { background: var(--struct); }
+  .hc-dot.unknown { background: var(--dim); }
+  .hc-dot.ace { background: #fff; }
+  .hc-portraits {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+  .hc-portrait {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    object-fit: cover;
+    background: #0f1216;
+  }
+  .hc-portrait.victim {
+    opacity: 0.7;
+    filter: grayscale(0.6);
+  }
+  .hc-arrow {
+    font-size: 10px;
+    color: var(--dim);
+  }
+  .hc-label {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hc-time {
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 11px;
+    color: var(--dim);
+    flex-shrink: 0;
+  }
+
+  /* Ghost playhead - preview of where a click would land, with magnetic snap. */
+  .scrub-ghost {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1px dashed rgba(230, 233, 239, 0.5);
+    pointer-events: none;
+    display: none;
+    z-index: 3;
+  }
+  .scrub-ghost.visible { display: block; }
+  .scrub-ghost.snapped { border-left: 1px solid var(--accent); }
+  .ghost-time {
+    position: absolute;
+    top: 5px;
+    left: 6px;
+    font-size: 11px;
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    color: var(--text);
+    background: rgba(10, 12, 15, 0.92);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+  .scrub-ghost.flip .ghost-time {
+    left: auto;
+    right: 6px;
+  }
+  .scrub-ghost.snapped .ghost-time { border-color: var(--accent); }
+
+  /* --- Cue points + A/B loop (brief 005) --- */
+
+  /* Cues live in the strip *below* the track; brief 004's event markers live in
+     the gutter above it. Different side, different shape, different colour -
+     two marker types on one bar must not be confusable. */
+  .cue-pins {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: 15px;
+  }
+  .cue-pin {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 15px;
+    background: var(--cue);
+    transform: translateX(-50%);
+    cursor: pointer;
+  }
+  /* Pin head, and a 16px hit target around the whole thing. */
+  .cue-pin::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--cue);
+  }
+  .cue-pin::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 19px;
+  }
+  .cue-pin.noted::after {
+    border-radius: 2px;
+  }
+  .cue-pin:hover,
+  .cue-pin.hot {
+    background: #fff;
+  }
+  .cue-pin:hover::after,
+  .cue-pin.hot::after {
+    background: #fff;
+  }
+  .cue-pin.active::after {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+
+  .loop-region {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(169, 123, 255, 0.16);
+    border-left: 1px solid var(--loop);
+    border-right: 1px solid var(--loop);
+    pointer-events: none;
+    display: none;
+    z-index: 2;
+  }
+  .loop-region.visible { display: block; }
+  .loop-region.armed { background: rgba(169, 123, 255, 0.3); }
+  .loop-edge {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--loop);
+    pointer-events: none;
+    display: none;
+    z-index: 2;
+  }
+  .loop-edge.visible { display: block; }
+  .loop-edge::after {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--loop);
+  }
+  .loop-edge.a::after { content: 'A'; }
+  .loop-edge.b::after { content: 'B'; }
+
+  .chip.loop {
+    color: #d8c2ff;
+    border-color: rgba(169, 123, 255, 0.45);
+    display: none;
+  }
+  .chip.loop.visible { display: inline; }
+  .chip.loop.armed {
+    background: rgba(169, 123, 255, 0.18);
+  }
+
+  /* Hotkeys only reach the panel while it has focus, which it usually doesn't
+     while the replay client holds it on the other monitor. This says why a
+     keypress just did nothing, rather than reading as a broken panel. */
+  .chip.focus {
+    color: var(--warn);
+    border-color: rgba(224, 178, 60, 0.35);
+    display: none;
+  }
+  .chip.focus.visible { display: inline; }
+
+  /* Command buttons - one visual language for every clickable action, each
+     carrying its own hotkey so the two input methods read as the same thing. */
+  .cmd-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cmd-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+  .cmd-key {
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 9px;
+    color: var(--dim);
+    background: #0b0d10;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0 5px;
+    min-width: 9px;
+    text-align: center;
+    flex: 0 0 auto;
+    box-sizing: content-box;
+  }
+  .cmd-btn.on {
+    background: var(--cue);
+    border-color: var(--cue);
+    color: #062120;
+  }
+  .cmd-btn.on .cmd-key {
+    color: #062120;
+    background: rgba(255, 255, 255, 0.35);
+    border-color: transparent;
+  }
+  .cmd-btn:disabled .cmd-key { opacity: 0.6; }
+  /* Belt-and-suspenders against whatever is causing the reported collision
+     (not reproduced in this session, same as #26) - the label and the key
+     never shrink even if something upstream squeezes the button itself. */
+  .cmd-btn > span {
+    flex: 0 0 auto;
+  }
+
+  .cue-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .cue-controls-label {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  /* Cues card - every cue shown expanded at once (not one at a time behind a
+     click), in its own top-level card rather than a rail tab. Placing a cue
+     grows this list, and the page, downward. */
+  .cues-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .cues-card-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .cues-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .cues-action-btn {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 7px;
+  }
+  .cues-action-btn:first-of-type {
+    margin-left: auto;
+  }
+  /* Brief 025: Clear all's armed state - one click away from deleting every
+     cue, deliberately distinct from .cmd-btn.on's cue-accent "engaged". */
+  .cues-action-btn.armed {
+    background: var(--bad);
+    border-color: var(--bad);
+    color: #2a0e0e;
+  }
+  .cues-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .cues-empty {
+    padding: var(--space-2);
+    font-size: 12px;
+    color: var(--dim);
+  }
+  .cue-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #0f1216;
+  }
+  /* Which cue B/N navigation is currently on - not tied to which field has
+     focus, since clicking into a note to fix a typo shouldn't relocate the
+     nav cursor. Only seeking to a cue (the timestamp, or B/N) moves it. */
+  .cue-block.active { border-color: var(--cue); }
+  .cue-block-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .cue-num {
+    flex-shrink: 0;
+    width: 18px;
+    text-align: right;
+    font-size: 10px;
+    color: var(--dim);
+  }
+  .cue-time {
+    flex-shrink: 0;
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 12px;
+    color: var(--cue);
+    cursor: pointer;
+  }
+  .cue-lead-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--dim);
+  }
+  .cue-lead {
+    width: 44px;
+    background: #0b0d10;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 3px 5px;
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+  }
+  .cue-del {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--dim);
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .cue-del:hover {
+    color: var(--bad);
+    border-color: var(--border);
+  }
+  /* Label on the left, notes on the right - a short line beside the
+     paragraph it labels, not stacked above it. */
+  .cue-block-body {
+    display: flex;
+    gap: var(--space-3);
+  }
+  .cue-label {
+    flex: 0 0 220px;
+    min-width: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    align-self: flex-start;
+  }
+  .cue-label:hover { border-color: #3d4756; }
+  .cue-label:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #0b0d10;
+  }
+  .cue-notes {
+    flex: 1;
+    min-width: 0;
+    min-height: 52px;
+    max-height: 200px;
+    resize: vertical;
+    background: #0b0d10;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .cue-notes:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .cue-export {
+    display: none;
+    width: 100%;
+    height: 90px;
+    resize: vertical;
+    background: #0b0d10;
+    border: 1px solid var(--accent);
+    border-radius: 7px;
+    padding: 6px 8px;
+    color: var(--text);
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .cue-export.visible { display: block; }
+
+  .legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 7px;
+    font-size: 10px;
+    color: var(--dim);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+  }
+  .legend-dot.kill { background: var(--kill); }
+  .legend-dot.objective { background: var(--obj); }
+  .legend-dot.tower { background: var(--struct); }
+  .legend-dot.ace { background: #fff; }
+  .legend-dot.cue {
+    background: var(--cue);
+    border-radius: 50%;
+  }
+  /* Persistent rail. Replaces the floating dropdowns from briefs 004/005 - at
+     1400px wide they opened straight over the scrub track, hiding the bar you
+     were about to click. */
+  .rail {
+    display: flex;
+    flex-direction: column;
+    width: 330px;
+    flex-shrink: 0;
+    background: #0b0d10;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .rail-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .rail-tab {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--dim);
+  }
+  .rail-tab.active {
+    color: var(--text);
+    background: #141920;
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+  .rail-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    height: 196px;
+    overflow-y: auto;
+    padding: 6px;
+  }
+  .rail-body[hidden] { display: none; }
+  .event-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .event-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .event-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .event-dot.kill { background: var(--bad); }
+  .event-dot.objective { background: var(--warn); }
+  /* Was --accent (blue) here, a real mismatch against the legend/marker/hover
+     card's grey --struct for the same category - found while touching this
+     block for issue #14's colour pass, fixed in passing. */
+  .event-dot.tower { background: var(--struct); }
+  .event-dot.unknown { background: var(--dim); }
+  .event-dot.ace { background: #fff; }
+  .event-label {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .event-time {
+    color: var(--dim);
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .scrub-handle {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 6px;
+    left: 0%;
+    transform: translateX(-3px);
+    background: var(--accent);
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 4;
+  }
+  /* Seeks lag 100–200ms. Without this the handle jumps to the optimistic target
+     and looks settled, which invites a second click on a seek already running. */
+  .scrub-handle.seeking {
+    background: #9dc0ff;
+    box-shadow: 0 0 0 3px rgba(77, 141, 255, 0.35);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .scrub-handle.seeking { animation: seek-pulse 0.7s ease-in-out infinite; }
+  }
+  @keyframes seek-pulse {
+    50% { box-shadow: 0 0 0 6px rgba(77, 141, 255, 0.12); }
+  }
+  .handle-time {
+    position: absolute;
+    /* Clears the 15px cue-pin strip that sits directly under the track. */
+    top: calc(100% + 18px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 11px;
+    color: var(--text);
+    background: #0f1216;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0 5px;
+    white-space: nowrap;
+  }
+  /* At 0% / 100% a centred bubble hangs off the track and over the events
+     column, so pin it to the handle's edge instead. */
+  .handle-time.clamp-start {
+    left: 0;
+    transform: none;
+  }
+  .handle-time.clamp-end {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+
+  .time-readout {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 14px;
+    color: var(--dim);
+    /* Clears the cue-pin strip and the handle's time bubble below the track. */
+    margin-top: 39px;
+  }
+  .time-next {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .time-next.soon { color: var(--warn); }
+
+  .transport-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+  /* .tc-left and .tc-right lay out their own contents either way; only the
+     outer arrangement (plain flow vs grid-centred) is conditional below. */
+  .tc-side {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  /* Everything floats centred against the speed control, as one compact
+     cluster rather than spread edge-to-edge - a 3-column grid with equal
+     outer tracks puts speed-presets on the row's true midpoint regardless
+     of how wide the other two clusters are, and each side packs its content
+     against its INNER edge (against speed-presets), pushing the unused
+     space out to the far left and right instead of into the gaps next to it.
+     Grid, not flex:1 0 0 on .tc-side - that was the first attempt, and it
+     centred correctly in this session's Chromium but broke visibly in
+     Fletcher's Firefox. The likely cause, found by searching rather than
+     guessing further: Firefox has a long-documented bug (Mozilla #1179454)
+     computing intrinsic width for a flex item whose flex-basis is 0 when
+     that item's own content is itself a nested flex container - which is
+     exactly what .tc-side (flex:1 0 0) containing .transport-unit/.cmd-group
+     (both display:flex) is. Grid's track-sizing algorithm doesn't share that
+     bug class. Gated on a container query, not a flex-wrap fallback, so
+     narrow widths still get the plain stacked-wrap behaviour brief 024
+     measured rather than a three-column grid with no room to breathe. */
+  @container (min-width: 1220px) {
+    .transport-controls {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+    }
+    .tc-left {
+      justify-content: flex-end;
+    }
+    .tc-right {
+      justify-content: flex-start;
+    }
+  }
+  /* Brief 024: nothing in this row shrinks - the five speed buttons are a
+     rigid 412px block that can't, so letting anything else shrink is the
+     only way the row can overlap. Overflow resolves as a wrap instead. */
+  .transport-controls > * {
+    flex: 0 0 auto;
+  }
+
+  /* Brief 024: seek buttons flank Pause as one visually joined control - zero
+     gap, inner corners squared, each button keeping its own height and border
+     so Pause still reads taller and primary rather than the three becoming a
+     single uniform box. The press animation is turned off here specifically -
+     with independent borders, one segment sliding 1px against its fused
+     neighbours on click reads as broken, not as feedback. */
+  .transport-unit {
+    display: flex;
+    align-items: center;
+  }
+  .transport-unit button:active {
+    transform: none;
+  }
+  .transport-unit #seekBackGroup .cmd-btn {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .transport-unit .pause-btn {
+    border-radius: 0;
+    margin-left: -1px;
+  }
+  .transport-unit #seekFwdGroup {
+    margin-left: -1px;
+  }
+  .transport-unit #seekFwdGroup .cmd-btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  /* A faint backdrop behind a cluster of separate (non-joined) buttons, so
+     the speed presets and the event/scan group read as two grouped
+     instruments rather than a flat run of identical dark pills - only a
+     background, no padding or border, so it shows through the existing
+     button gaps without changing any measured dimension. */
+  /* Scan replay is not a peer of the event steppers either - it's the one
+     button that turns into a progress readout and a cancel control, and
+     that's worth a quiet visual difference before you ever click it. */
+  .cmd-btn[data-command='scanReplay'] {
+    border-color: rgba(77, 141, 255, 0.5);
+  }
+
+  /* Fixed line-height, not the font's own metrics - Fletcher's Firefox
+     measured this row at 66px against Chromium's ~45px for the same
+     content, and the only characters that differ between the two browsers'
+     available fonts are the «/»/‹/› glyphs on the seek and event buttons.
+     A fallback glyph with unusual ascent/descent inflates an unconstrained
+     line box in exactly the way that explains a taller-than-expected row -
+     line-height:1 removes the font's say in it entirely. */
+  button {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 11px 14px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: #0f1216;
+    color: var(--text);
+    cursor: pointer;
+    transition: box-shadow 0.1s ease;
+  }
+  /* An inset wash rather than a fixed background colour, so one rule covers
+     every button regardless of its own colour - dark, accent-filled
+     (.pause-btn, .speed-btn.active), warn-filled (.cinematic-btn.active),
+     cue-filled (.cmd-btn.on) or bad-filled (.cues-action-btn.armed) all
+     lighten correctly with no per-variant overrides to keep in sync, and it
+     respects each button's own border-radius.
+     Could not verify the rendered result of :hover itself in this session's
+     Browser pane - it doesn't composite frames (the same reason its own
+     screenshots time out), and getComputedStyle() on a real element kept
+     reporting pre-hover values for every property tried (filter,
+     border-color, box-shadow) even though element.matches(':hover')
+     correctly read true after a real dispatched hover. Setting the same
+     properties directly (not via :hover) reads back correctly, so this is a
+     gap in observing :hover-triggered recalculation specifically in this
+     harness, not evidence the CSS itself is wrong - standard, unconditional
+     :hover syntax, should render normally in a real browser. */
+  button:not(:disabled):hover {
+    box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.08);
+  }
+  button:active { transform: translateY(1px); }
+  button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .pause-btn {
+    flex: 0 0 120px;
+    background: var(--accent);
+    color: #06121f;
+  }
+
+  /* Fixed-width rather than flex:1 - stretched across a 1340px card the speed
+     buttons were ~230px each, which reads as five giant slabs. */
+  .speed-presets {
+    display: flex;
+    gap: 8px;
+  }
+  .speed-btn {
+    flex: 0 0 76px;
+    position: relative;
+  }
+  /* The recommended narration speed used to draw an accent border, which read
+     as "selected" at the same time as the actually-active button's fill. Now a
+     dot, so only one button can look active. */
+  .speed-btn.primary::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 4px;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--dim);
+  }
+  .speed-btn.active {
+    background: var(--accent);
+    color: #06121f;
+  }
+  .speed-btn.active::after { background: rgba(6, 18, 31, 0.55); }
+
+  .hint {
+    margin-left: auto;
+    text-align: right;
+    font-size: 11px;
+    color: var(--dim);
+  }
