@@ -718,6 +718,30 @@
   let harvestToken = 0; // bumped whenever a new replay connects, invalidates any in-flight harvest
   let lastProcessId = null;
 
+  // Brief 027: dedupe by gap from an anchor, not a fixed grid. Each identity's
+  // first-seen time becomes a fixed anchor; a later copy within tolerance merges
+  // into it. The anchor never moves - re-anchoring on merge would let a chain of
+  // jittered copies (t, t+1.9, t+3.7...) walk arbitrarily far from the first real
+  // event, which is exactly the false merge the tolerance exists to prevent.
+  const DEDUPE_TOLERANCE_S = 2;
+  let eventAnchors = new Map(); // identity -> anchor times, in the order first seen
+
+  function eventAnchorKey(event) {
+    const identity = eventIdentity(event);
+    const anchors = eventAnchors.get(identity);
+    if (!anchors) {
+      eventAnchors.set(identity, [event.EventTime]);
+      return `${identity}|${event.EventTime}`;
+    }
+    for (const anchor of anchors) {
+      if (Math.abs(anchor - event.EventTime) <= DEDUPE_TOLERANCE_S) {
+        return `${identity}|${anchor}`;
+      }
+    }
+    anchors.push(event.EventTime);
+    return `${identity}|${event.EventTime}`;
+  }
+
   // Explicit harvest (brief 009): a fresh replay's timeline only fills once the
   // user asks for it, so recording never opens on an uncommanded jump to the
   // end of the game. harvestDone covers both a cache hit and a completed scan.
@@ -832,22 +856,20 @@
     }
   }
 
-  // Identifies "the same real event" independent of EventID, which the client
-  // reassigns every time replay playback re-passes the point it happened at.
-  // 2s buckets absorb the jitter observed between re-emitted copies of the
-  // same event, measured up to ~1s (brief 016/017) - a 200ms bucket only
-  // absorbed a "few-millisecond jitter" that was never actually observed and
-  // let a full second of drift produce duplicate rows for the same kill.
-  // Two seconds is safe for a killer/victim pair - the respawn timer makes a
-  // second genuinely distinct kill of the same victim by the same killer
-  // impossible inside that window - but not for Multikill, which fires
-  // repeatedly for the same killer with no victim to tell the copies apart,
-  // so KillStreak is in the tuple specifically to keep a climbing streak's
-  // rows from collapsing into one.
-  function eventFingerprint(event) {
+  // Identifies "the same real event" independent of EventID and EventTime. The
+  // client reassigns EventID and jitters EventTime by up to ~1s every time
+  // playback re-passes the point an event happened at (brief 016/017), so
+  // neither is safe to key on - eventAnchorKey() (:718) handles the time
+  // dimension separately, with a tolerance around this identity's first-seen
+  // anchor rather than a fixed grid. Two seconds is safe for a killer/victim
+  // pair - the respawn timer makes a second genuinely distinct kill of the
+  // same victim by the same killer impossible inside that window - but not for
+  // Multikill, which fires repeatedly for the same killer with no victim to
+  // tell the copies apart, so KillStreak is in the tuple specifically to keep
+  // a climbing streak's rows from collapsing into one.
+  function eventIdentity(event) {
     return [
       event.EventName,
-      Math.round(event.EventTime * 0.5),
       event.KillerName || '',
       event.VictimName || '',
       event.Recipient || '',
@@ -1179,6 +1201,7 @@
 
   function clearEventsDisplay() {
     eventsByKey.clear();
+    eventAnchors.clear();
     loggedUnknownEvents.clear();
     sortedEvents = [];
     renderMarkers();
@@ -1188,9 +1211,11 @@
   function mergeEvents(events) {
     let changed = false;
     for (const event of events) {
-      const key = eventFingerprint(event);
-      if (!eventsByKey.has(key)) changed = true;
-      eventsByKey.set(key, event);
+      const key = eventAnchorKey(event);
+      if (!eventsByKey.has(key)) {
+        eventsByKey.set(key, event);
+        changed = true;
+      }
     }
     if (changed) {
       sortedEvents = visibleEvents();
