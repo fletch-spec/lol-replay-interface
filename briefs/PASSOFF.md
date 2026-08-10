@@ -3,6 +3,11 @@
 Paste once at session start. One session takes one brief, works it end to end
 without stopping, and hands back two files.
 
+**Start it with `/stonne`** (optionally `/stonne 027`). That skill declares the
+model tier, refuses to run an `opus` brief or to build on top of an unreviewed
+branch, picks the head of the queue, and then hands off to this file. Pasting the
+block below by hand still works and does the same thing, minus the refusals.
+
 **Model: Sonnet.** This tier executes decisions it did not make. Everything that
 needed judgement was spent upstream - `TRIAGE.md` ordered the queue, `AUTHOR.md`
 made the design calls and wrote the traps, and `REVIEW.md` will judge the result.

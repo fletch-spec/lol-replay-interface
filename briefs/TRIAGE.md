@@ -2,12 +2,17 @@
 
 Four documents, four roles, one brief moving between them:
 
-| Doc | Role | Model | Turns | Into |
-|---|---|---|---|---|
-| **`TRIAGE.md`** | Project manager | Opus | open issues | commissions + a queue order |
-| `AUTHOR.md` | Senior | Opus | one commission | one brief in `ready/` |
-| `PASSOFF.md` | Junior | Sonnet | one brief | a plan, a branch, a report |
-| `REVIEW.md` | Reviewer | Opus | one report | a verdict, an Outcome, a merge |
+| Doc | Role | Model | Start with | Turns | Into |
+|---|---|---|---|---|---|
+| **`TRIAGE.md`** | Project manager | Opus | `/opsu triage` | open issues | commissions + a queue order |
+| `AUTHOR.md` | Senior | Opus | `/opsu author NNN` | one commission | one brief in `ready/` |
+| `PASSOFF.md` | Junior | Sonnet | `/stonne [NNN]` | one brief | a plan, a branch, a report |
+| `REVIEW.md` | Reviewer | Opus | `/opsu review NNN` | one report | a verdict, an Outcome, a merge |
+
+`/opsu` with no argument works out which of its three modes is due from the
+repo's own state; `/stonne` with no argument takes the head of the queue. Both
+declare their model tier first and refuse to run on the wrong one, which is the
+only part of `model:` that was ever enforceable.
 
 This is the first. Run it when open issues have piled up and the queue is empty
 or thin. It ends with a commission per brief, a queue order with lanes, and a log
