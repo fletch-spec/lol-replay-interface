@@ -61,10 +61,12 @@ used fresh-probe elements and real DOM state (`hidden`, `classList`) instead.
 
 ## Left behind
 
-Nothing. No replay was connected (League client unreachable) for the whole
-session; verification used a temporarily-removed `.disabled` class (console)
-for steps 1-5 since the toggle handler itself doesn't read connection state,
-and step 6 was checked in its natural disabled state.
+Nothing. Steps 1-5 were first verified with a console-removed `.disabled`
+class (no replay connected yet), then re-confirmed after a replay connected
+mid-session: `#scene` naturally lost `.disabled` (`pointer-events: auto`,
+`statusText: "Connected"`), and a real dispatched click (not `.click()`) on
+the live button opened the Setup panel correctly. Step 6 was checked in its
+natural disabled state before the replay connected.
 
 ---
 
