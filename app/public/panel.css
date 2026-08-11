@@ -118,10 +118,25 @@
     padding: 6px 10px;
     border: none;
     border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .control-split-caret::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border: none;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease;
   }
   .control-split-caret.open {
-    border-color: var(--accent);
     color: var(--accent);
+  }
+  .control-split-caret.open::before {
+    transform: rotate(45deg);
   }
   .scene-setup {
     display: flex;
