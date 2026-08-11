@@ -87,6 +87,27 @@ on 027:
 When it fires, fall through to §2's ordering. It will land on `review` - that is
 the point of the mode, not a coincidence.
 
+### Between cycles: clear or compact, never while a wait is armed
+
+`review`'s input is the report, the diff and three sections of the brief -
+nothing from a prior cycle's conversation is needed, same as `author`'s
+existing "one brief per session, `/clear` before the next one" rule (§3).
+Resetting context between cycles costs nothing structurally; the only question
+is which reset, and when.
+
+**When:** only right after the monitor poll fires, before the next mode's
+substantive work starts - never while the `run_in_background` poll is still
+outstanding. Clearing out from under a job that's expected to notify this same
+conversation orphans the notification.
+
+**Which:** compact by default - it keeps the just-finished cycle's verdict and
+any escalation on hand if Fletcher is still in the room and asks about one,
+while dropping the diff reading and file exploration that cost the context.
+Clear instead when the loop is running unattended (a scheduled or autonomous
+invocation, no one watching this session) - nothing from the finished cycle is
+needed and there is no one to field a follow-up, so paying for compact's
+summary buys nothing over the Outcome already committed.
+
 ## 3. Run the mode
 
 Read that mode's document in full and follow it. Do not summarise it back first.
