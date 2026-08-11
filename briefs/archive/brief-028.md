@@ -1,8 +1,8 @@
 ---
 id: brief-028
-state: ready
+state: complete
 created: 2026-08-08
-updated: 2026-08-08
+updated: 2026-08-11
 agent: user
 project: LOL-REPLAY-CONTROLLER
 depends_on: []
@@ -58,10 +58,19 @@ character remains anywhere in the split control's markup.
 
 **The caret is drawn in CSS, not typed as a character.** A `::before` on
 `.control-split-caret` with two borders and a 45° rotation - the standard
-two-sided box chevron. Pointing right is `rotate(45deg)`; pointing down is
-`rotate(135deg)`. `.control-split-caret.open` supplies the second rotation, and a
+two-sided box chevron. Pointing right is `rotate(-45deg)`; pointing down is
+`rotate(45deg)`. `.control-split-caret.open` supplies the second rotation, and a
 `transform` transition makes the turn visible so the caret reads as the same
 object moving rather than two different icons.
+
+> **Corrected at review, 2026-08-11.** This brief originally specified
+> `rotate(45deg)` for right and `rotate(135deg)` for down. Both are wrong. For a
+> `border-right`+`border-bottom` box the vertex is local `(+3,+3)`, and under
+> CSS's clockwise-positive screen rotation it lands at `(4.24, 0)` at `-45deg`
+> (right), `(0, 4.24)` at `+45deg` (down), and `(-4.24, 0)` at `135deg` (left).
+> The original pair would have started the caret pointing down and turned it
+> left. The executing session caught this and shipped the correct angles; the
+> text above is the fix, so the next reader does not copy the error.
 
 Reason it wins: a CSS chevron has no font dependency at all, so it cannot fall
 back, cannot bring foreign metrics with it, and its geometry is arithmetic -
@@ -139,7 +148,7 @@ the caret ever disagrees with the panel, the bug is in this brief, not there.
    centre agree within 1px on both axes, computed in the console.
 
 3. **Point it down when open.** `.control-split-caret.open::before { transform:
-   rotate(135deg); }`. Keep the `color` change already on `.open`; delete the dead
+   rotate(45deg); }`. Keep the `color` change already on `.open`; delete the dead
    `border-color` declaration at `:130`.
    *Done when:* clicking the caret flips the rotation and the Setup panel's
    `hidden` in the same click, in both directions, ten times in a row without
@@ -152,7 +161,7 @@ the caret ever disagrees with the panel, the bug is in this brief, not there.
    *Done when:* the caret visibly rotates rather than snapping, and no transition
    is declared outside the guard that the rest of the file puts its motion inside.
 
-5. **Re-check the centring at both rotations.** 45° and 135° have different
+5. **Re-check the centring at both rotations.** −45° and 45° have different
    bounding boxes for the same square.
    *Done when:* step 2's measurement passes in the open state as well as the
    closed one.
@@ -202,9 +211,9 @@ Against the live app:
   the button's edge and it will look like a rendering glitch rather than a margin.
 - **A rotated square's bounding box is not its border box.** A 6px square rotated
   45° occupies ~8.5px. Both the centring maths in step 2 and any width the button
-  needs have to use the rotated box, and 45° and 135° do not produce the same
+  needs have to use the rotated box, and −45° and 45° do not produce the same
   visual centre for a two-sided chevron even though they produce the same
-  bounding box.
+  bounding box. **This trap was real and was not addressed** - see `Outcome`.
 - **`button` sets `padding: 11px 14px`** (`:1356`) and `.control-split-caret`
   overrides it to `6px 10px` (`:125`). `justify-content: center` centres inside
   the *content* box, so an asymmetric padding change shifts the caret without
@@ -237,3 +246,67 @@ side effect of a caret. Any other glyph in the file (`«`, `»`, `‹`, `›`, `
   without the transition rather than inventing a second convention. A caret that
   points the right way and does not move is the whole issue; the turn is a
   nicety.
+
+## Outcome
+
+**Shipped in 18 lines, and the brief's own geometry was the only thing wrong with
+it.** `#setupToggle` loses its text node, `.control-split-caret` gains flex
+centring, and a `::before` draws the chevron from `border-right` +
+`border-bottom` in `currentColor` with a `transform 0.15s ease` transition.
+`.open::before` supplies the second rotation and the dead `border-color:
+var(--accent)` is gone. The `⌄` is out of `app/` entirely (`git grep` → no
+matches), so #30's font-fallback dependency is closed at the root rather than
+nudged.
+
+**The brief specified the rotations backwards and the executing tier caught it.**
+`rotate(45deg)`/`rotate(135deg)` would have started the caret down and turned it
+left. The session derived the correct pair from the browser's own computed
+transform matrix rather than by eyeballing - which is the only way to get this
+right in a Browser pane that cannot composite frames - and the brief's Decision
+text above has been corrected at review. **This is the useful shape:** the
+executing tier is allowed to depart from a Decision when the code does not
+support it, and a matrix it can read beats an angle the author reasoned about in
+their head.
+
+**The centring evidence proves a quantity that cannot fail, and the offset the
+Traps section named is still there.** Step 3's "pseudo-el rect centre ==
+content-box centre, 0px delta" is guaranteed by construction: a flex-centred
+element with the default `transform-origin: 50% 50%` has its *bounding box*
+centred no matter what angle it is rotated to. The measurement confirms `Done
+Looks Like` as written, but it does not test the thing step 2's margin
+compensation existed for. A 6×6 box whose only ink is two 1.5px borders has an
+ink centroid at local `(3.96, 3.96)` against a box centre of `(3, 3)` - **≈1.36px
+toward the vertex**, which after rotation reads as ~1.4px right of centre when
+closed and ~1.4px below centre when open. The residue is smaller than and
+different in kind from #30's original defect (the default state is now vertically
+exact, which is what the issue was about), so it ships - but it is a real
+un-taken step, not an absent one, and it is a candidate commission for triage
+rather than a closed question.
+
+**Lesson for the next report: an invariant that holds by construction is not
+evidence.** This is the `Agreeing with itself is not verification` rule wearing a
+different hat. Brief 016 measured cached-equals-live through one code path;
+this measured centred-equals-centred through one geometric identity. When a
+brief asks for a measurement, the report should say what result would have
+counted as a failure - and if nothing would have, the measurement is the wrong
+one.
+
+**One escalation trigger was never armed.** `Escalate Instead Of Deciding` said
+to stop if removing the glyph changed the split control's width, because brief
+022's 96px/52px numbers might have been resting on it. The report never compares
+the button's width against its pre-change value - step 4's stable 126px is a
+different invariant (width across the `Cinematic` → `Restore HUD` label swap).
+The old glyph's advance width was almost certainly not exactly the 6px the
+pseudo-element lays out at, so the control probably *did* change width, silently.
+Unresolvable without checking out `main` and re-measuring; carried forward as a
+note rather than reopened.
+
+**Report quality: good.** Judging this cost the report, the diff, and two
+targeted `git show` greps - the reduced-motion guard (confirmed: it wraps one
+infinite `animation:` and nothing else, so shipping the transition ungated
+matches the file's actual pattern and satisfies step 4's own conditional) and the
+global `box-sizing: border-box`. `index.html` was never opened. That is the
+schema working. The one nit: the transition-guard resolution lived in
+`plan-028.md`'s `Deltas from the brief` but not in the report's `Deviations`, so
+a reviewer reading only the report cannot tell whether step 4's condition was
+evaluated or ignored. Deltas that resolve a brief's conditional belong in both.
