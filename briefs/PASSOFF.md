@@ -52,14 +52,15 @@ own header note. Symbol names are stable, line numbers are not - grep. Nothing
 stays in the working tree between sessions: wraps and triage passes both push, and
 GitHub is the source of truth.
 
-**029 and 030 close issues GitHub already thinks are done.** #28 and #29 were both
-closed as COMPLETED on 2026-08-08, one second apart and with no comment, before
-either brief was written - and neither brief has run. Both mechanisms are still
-live at `c647538` (`nearestCluster()` measures a point against `SNAP_PX = 8`;
-`.panel` is still capped at 1400px with an unwrapped `.timeline-row` against a
-330px `.rail`). The fifth triage pass escalated the reopen to Fletcher rather than
-doing it, because reopening changes an issue's meaning. **Build them anyway** -
-the defects are real and the closure is the bookkeeping error, not the brief.
+**029 and 030's issues spent four days closed while their work sat unbuilt.** #28
+and #29 were both closed as COMPLETED on 2026-08-08, one second apart and with no
+comment, before either brief was written - and both mechanisms were still live at
+`c647538` (`nearestCluster()` measures a point against `SNAP_PX = 8`; `.panel`
+still capped at 1400px with an unwrapped `.timeline-row` against a 330px `.rail`).
+The fifth triage pass found it and Fletcher reopened both, so **they are open
+again and nothing about building 029/030 is unusual**. Kept here as the reason no
+gate caught it: a build session reading a brief does not check its issue's state,
+and nothing compares the two.
 
 029 and 030 came from the fourth triage pass - 029 is the hover dead zone over a
 wide cluster's count digit, 030 is panel scaling - and they share the marker
