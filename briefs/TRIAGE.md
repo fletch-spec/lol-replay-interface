@@ -147,11 +147,14 @@ Lanes: 031 (server, boot) may run beside any of them.
 Two rules that fall out of it, both learned the expensive way rather than
 reasoned from first principles:
 
-- **A brief that owns a whole file blocks the lane.** While `app/public/index.html`
-  is one 140KB file, almost everything collides with almost everything, and the
-  second executing session mostly idles. An idle session costs nothing; two
-  sessions rebasing the same file costs a rebuild. Do not manufacture
-  parallelism the code does not support.
+- **A brief that owns a whole file blocks the lane.** This was written when
+  `app/public/index.html` was one 140KB file and almost everything collided with
+  almost everything. Brief 032 split it, and the rule survived the split rather
+  than being repealed by it: `panel.js` is still 95KB, so a brief owning it whole
+  (033) still blocks the lane. An idle session costs nothing; two sessions
+  rebasing the same file costs a rebuild. Do not manufacture parallelism the code
+  does not support - the fifth triage pass got a real second lane only because
+  034 and 035 touch no app code at all.
 - **Depth beats width when the lanes are narrow.** If only one brief can run,
   run one. The second Sonnet session is better spent on the *next* brief's plan
   than on a colliding build.

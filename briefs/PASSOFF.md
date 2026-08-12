@@ -24,46 +24,49 @@ capped, both are schemas, and a reviewer reads them for a fraction of what a
 conversational stop costs. Fletcher's own test moves to *after* review, where it
 is the last word instead of the third interruption.
 
-Updated 2026-08-10: 001-011, 013-020, 022-026 done, 012 cut. Queue is
-**031 → 032 → 027 → 028 → 029 → 030**. Briefs are verbose and self-contained -
-each carries its own decisions, code anchors, steps, verification and traps - so
-this prompt only has to set the frame and the handoff.
+Updated 2026-08-12 (fifth triage pass): 001-011, 013-020, 022-028 and 032 done,
+012 cut. Queue is **034 → (029 → 030 | 035) → 033**, and it is two lanes rather
+than a line for the first time - see the lane block below. Briefs are verbose and
+self-contained - each carries its own decisions, code anchors, steps, verification
+and traps - so this prompt only has to set the frame and the handoff.
 
-**032 is new and it is not a feature.** It splits `app/public/index.html`'s CSS
-and JS into `panel.css` and `panel.js` without changing any behaviour, because
-that one 140KB file is resident in context for every turn of every session at
-every tier, and it is why almost every brief collides with almost every other
-one. It runs after 031 and before 027-030, and it re-points those briefs' code
-tables as a step.
+**The 140KB file is gone, and so is the rule that came from it.** Brief 032 split
+`app/public/index.html` into `index.html` (150 lines of markup), `panel.css` and
+`panel.js`, byte-identically, and re-pointed every ready brief's code table as a
+step. The old note here - *everything collides with everything, run ONE session* -
+was true of one file and stopped being true at that merge. Read by anchor into the
+right one of the three; a CSS-only brief no longer loads 95KB of JS to do it.
 
-**031 runs first even though its number is last**, and that is deliberate rather
-than an oversight. It tests driving the panel from a second machine over the LAN
-- the control half of #31, which Fletcher has put ahead of the video card - and
-it is cheap, it gates that feature, and it may change what "the panel's origin"
-means for work the others assume. 027-030 were already written and pushed;
-`TRIAGE.md`'s rule is that renumbering costs more than the problem it solves, so
-the exception is documented instead of the numbers being churned. It is the only
-one in the queue.
+**031 and 021 are both blocked on Fletcher's hands, not on work.** 031 needs a
+Windows Firewall inbound rule for TCP 3000 and a second physical machine on the
+LAN; 021 needs streamer mode toggled inside the League client. Neither is in the
+running order, both stay in `ready/` as records. The same is true of **#7/#14**
+(needs a replay known to contain a dragon or baron) and **#16** (behind 021). Four
+of ten open issues sit here, which is the actual reason the queue is thin -
+authoring more briefs does not fix it.
 
-**021 is blocked and out of the running order.** It needs streamer mode toggled
-inside the League client by hand, which no session can do; it stays in `ready/`
-as a record. Start at 027 unless Fletcher has run that toggle.
+**Everything is committed and pushed** as of `c647538`. Briefs 029 and 030 carry
+line numbers from brief 032's merge commit, split across `index.html`, `panel.css`
+and `panel.js`; their prose still cites pre-split line numbers and says so in its
+own header note. Symbol names are stable, line numbers are not - grep. Nothing
+stays in the working tree between sessions: wraps and triage passes both push, and
+GitHub is the source of truth.
 
-**Everything is committed and pushed** as of `db827c1` - briefs 022-026's code,
-the timeline-controls UI overhaul, and this queue. 027-030's headers name
-`943760b` plus uncommitted changes because that is what they were written
-against; `db827c1` is the same content, so grep the symbol and move on. From now
-on nothing stays in the working tree between sessions: wraps and triage passes
-both push, and GitHub is the source of truth.
+**029 and 030 close issues GitHub already thinks are done.** #28 and #29 were both
+closed as COMPLETED on 2026-08-08, one second apart and with no comment, before
+either brief was written - and neither brief has run. Both mechanisms are still
+live at `c647538` (`nearestCluster()` measures a point against `SNAP_PX = 8`;
+`.panel` is still capped at 1400px with an unwrapped `.timeline-row` against a
+330px `.rail`). The fifth triage pass escalated the reopen to Fletcher rather than
+doing it, because reopening changes an issue's meaning. **Build them anyway** -
+the defects are real and the closure is the bookkeeping error, not the brief.
 
-027-030 came from the fourth triage pass: 027 finishes #13's dedupe (the 2s
-bucket is a fixed grid, so its real tolerance is 0-2s depending where a pair
-lands - 3 known pairs still survive, and brief 026's full play-through made
-repeated scans grow 101 → 106 → 109), 028 is the setup caret, 029 is the hover
-dead zone over a wide cluster's count digit, 030 is panel scaling. Run them in
-that order: 027 changes the cluster counts 029 and 030 both measure against, and
-029 and 030 share the marker gutter - 029 owns where the hit test thinks a marker
-is, 030 owns where its box is, so 030 re-runs 029's sweep as a step.
+029 and 030 came from the fourth triage pass - 029 is the hover dead zone over a
+wide cluster's count digit, 030 is panel scaling - and they share the marker
+gutter: 029 owns where the hit test thinks a marker is, 030 owns where its box is,
+so 030 re-runs 029's sweep as a step and they stay in that order. 033/034/035 came
+from the fifth: 034 and 035 are the first briefs this queue has had that touch no
+app code at all, which is what makes a second lane possible.
 
 Brief 019 shipped the diamond fallback for kill markers, not the X, because this
 session's Browser pane does not composite frames - `computer` screenshots time
@@ -77,10 +80,12 @@ different reason - Fletcher is moving to Brave/Opera, so Chromium is the target
 and cross-browser support is a later goal), and **#7**
 (dragon/baron/herald - every replay available so far has had zero neutral
 objective events of any kind, which briefs 019 and 026 both flagged as evidence
-without deciding it; #14's empty-lane residue rides with it). **#31** (OBS LAN
-stream in-browser) now has its premise and its research on the issue: the control
-half is brief 031 and runs first, the video card is backlogged behind it. See
-`TRIAGE.md` for how this queue was filled.
+without deciding it; #14's empty-lane residue rides with it), and **#16**
+(streamer mode disabling camera control, behind 021's client toggle). **#31** (OBS
+LAN stream in-browser) has its premise and its research on the issue: the control
+half is brief 031 and the video card is backlogged behind it, but 031 itself is
+now blocked on the firewall rule and the second machine, so neither half is
+runnable today. See `TRIAGE.md` for how this queue was filled.
 
 ---
 
@@ -91,18 +96,29 @@ one pass. Live replay control only - not an editor, not a stats tool. If a
 feature doesn't help someone talk over a replay in real time, it's out.
 
 Queue:   C:\dev\lol-replay-interface\briefs\ready\
-         Order: 031 → 032 → 027 → 028 → 029 → 030
-         Lanes: everything collides with everything until 032 lands, because
-                every brief owns app/public/index.html. Run ONE session until
-                then. After 032: 028 is disjoint from 027/029/030 and may run
-                beside them; 029 → 030 share the marker gutter and stay in
-                order; 027 precedes both because it changes the counts they
-                measure.
-         031 is first despite its number, see its header. 021 also sits here,
-         blocked on a physical client toggle - skip it.
-Archive: C:\dev\lol-replay-interface\briefs\archive\ (001-020, 022-026, read the Outcome sections)
-Code:    C:\dev\lol-replay-interface\app\ - Node helper (server.js) + single-file
-         vanilla-JS panel (public/index.html). No build step. Windows.
+         Order: 034 → (029 → 030 | 035) → 033
+         Lanes: 034 FIRST and alone. It rewrites this file's Stage 3, so
+                landing it before 029 makes 029 and 030 cheaper to build
+                rather than only helping some later brief. Minutes of work,
+                and #37 puts a 2026-08-31 deadline on it.
+                Then two lanes run side by side, owns: sets disjoint:
+                  A: 029 → 030   app/public/panel.js + panel.css (marker
+                     gutter, shared - 029 owns where the hit test thinks a
+                     marker is, 030 owns where its box is, in that order)
+                  B: 035         .claude/ only, no app code
+                033 LAST and only if the app queue refills - it owns
+                panel.js whole, so it collides with both of lane A, and a
+                module split pays off across future briefs that do not
+                currently exist. Do not start it before 029 and 030 merge.
+         Numbers are not execution order here and that is deliberate: 033 is
+         named in report-032-bindings.md on main, and renumbering would make
+         a merged document lie. Same exception 031 ran under.
+         021 and 031 also sit in ready/, both blocked on physical hardware
+         Fletcher has to set up - skip them.
+Archive: C:\dev\lol-replay-interface\briefs\archive\ (001-020, 022-028, 032, read the Outcome sections)
+Code:    C:\dev\lol-replay-interface\app\ - Node helper (server.js) + vanilla-JS
+         panel split across public/index.html (markup, 150 lines),
+         public/panel.css and public/panel.js. No build step. Windows.
 
 Five facts that cost 001-007 real time. Don't rediscover them:
 1. The Replay API returns 200 for unknown field names and ignores them. Verify
@@ -151,13 +167,15 @@ artifacts, one handoff:
   Then STOP and tell me: the result line, the escalations, and nothing else.
 
 Notes on working the briefs:
-- READ BY ANCHOR, NOT BY FILE. app/public/index.html is ~140KB; once you read it
-  whole it sits in context for every remaining turn of the session, and that
-  resident context is the single largest thing this project spends tokens on.
+- READ BY ANCHOR, NOT BY FILE. panel.js is ~95KB and panel.css ~39KB; once you
+  read one whole it sits in context for every remaining turn of the session, and
+  that resident context is the single largest thing this project spends tokens on.
   The brief's "Where The Code Is" table exists so you don't have to: read the
-  named ranges plus surrounding context, and grep for symbols beyond that.
-- Line numbers in briefs 027-030 are from commit 943760b PLUS the uncommitted
-  022-026 changes in the working tree, and will drift. Symbol names are stable -
+  named ranges plus surrounding context, and grep for symbols beyond that. Brief
+  032 split the old single file precisely so a CSS brief never loads the JS.
+- Line numbers in briefs 029 and 030 are from brief 032's merge commit and are
+  split across the three files; the prose inside those briefs still cites
+  pre-split numbers and says so in its own header note. Symbol names are stable -
   grep for those.
 - The swagger at https://127.0.0.1:2999/swagger/v3/openapi.json is authoritative
   for field names (the /docs HTML page 404s on curl). Everything is reachable
@@ -173,7 +191,7 @@ Notes on working the briefs:
   better CSS.
 - Each brief has an "Escalate Instead Of Deciding" section. Use it.
 
-Start at Stage 1 for brief 031.
+Start at Stage 1 for brief 034.
 ```
 
 ---
@@ -199,9 +217,10 @@ prompt.
 
 **Two sessions at once.** Only if the two briefs' `owns:` sets are disjoint -
 `TRIAGE.md` publishes the lanes with the queue. Each session gets its own
-`brief/NNN` branch, so `main` is never contended. While `app/public/index.html`
-is one 140KB file almost everything collides with everything, and running one
-session is the correct answer more often than not.
+`brief/NNN` branch, so `main` is never contended. This became real on 2026-08-12:
+briefs 034 and 035 touch no app code at all, so lane B genuinely runs beside lane
+A. Inside `app/` the old caution still mostly holds even after 032's split -
+`panel.js` is 95KB and any brief owning it whole blocks the lane.
 
 **The four documents.** [`TRIAGE.md`](TRIAGE.md) fills the queue and cuts it into
 lanes. [`AUTHOR.md`](AUTHOR.md) turns one commission into one brief. This file
